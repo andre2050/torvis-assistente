@@ -149,7 +149,21 @@ public class MainActivity extends Activity {
         public String plataforma() { return "android"; }
 
         @JavascriptInterface
-        public String versao() { return "6.6.6"; }
+        public String versao() { return "6.6.7"; }
+
+        /* atualização: entrega o APK novo para o Android instalar */
+        @JavascriptInterface
+        public String atualizar(String url) {
+            try {
+                String alvo = (url == null || url.trim().isEmpty())
+                        ? "https://github.com/andre2050/torvis-assistente/releases/latest"
+                        : url.trim();
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(alvo));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return "ok";
+            } catch (Exception e) { return "não abri o download: " + e.getMessage(); }
+        }
 
         /* ── brilho da tela deste app ─────────────────────────────────────── */
         @JavascriptInterface

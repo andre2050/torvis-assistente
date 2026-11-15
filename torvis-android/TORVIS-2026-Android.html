@@ -170,6 +170,7 @@
   <button class="chip" id="chip-lanterna">🔆 Lanterna</button>
   <button class="chip" id="chip-bateria">🔋 <span id="chip-bateria-txt">—</span></button>
   <button class="chip" id="chip-maos">🎧 Mãos livres</button>
+  <button class="chip" id="chip-atualizar">⬆ Atualizar</button>
   <button class="chip" id="chip-pc">💻 PC</button>
 </div>
 
@@ -307,6 +308,15 @@
       <button class="mini" id="f-exportar">Exportar tudo</button>
       <button class="mini" id="f-limpar">Limpar conversa</button>
     </div>
+  </div>
+
+    <div class="bloco"><h3>Atualização do app</h3>
+    <div class="campos">
+      <span class="mini" style="flex:1; border:none; background:none; color:var(--dim)">versão <b id="versao-app">—</b></span>
+      <button class="mini" id="f-atualizar-ver">Procurar</button>
+      <button class="mini" id="f-atualizar-baixar">Baixar e instalar</button>
+    </div>
+    <div class="res" id="atualiza-res"></div>
   </div>
 
   <div class="btns"><button class="principal" id="f-fechar">Fechar</button></div>
@@ -947,6 +957,7 @@ function lembrarFato(texto) {
   lista.push(limpo);
   guardarMemoria(lista);
   desenharMemoria();
+  if ($("versao-app")) $("versao-app").textContent = versaoAtual();
   return limpo;
 }
 
@@ -1062,6 +1073,69 @@ function limparConversa() {
   salvarChat();
   $("ferramentas").close();
   pintar("Conversa limpa. Memória e notas continuam salvas.", "sys");
+}
+
+/* ═══ atualização do próprio app ══════════════════════════════════════════ */
+const REPO_RELEASE = "https://api.github.com/repos/andre2050/torvis-assistente/releases/latest";
+
+function versaoAtual() {
+  if (ponte && ponte.versao) { try { return String(ponte.versao()); } catch (e) { } }
+  return "6.6.7";
+}
+
+function compararVersao(a, b) {
+  const pa = String(a).split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+async function procurarAtualizacao() {
+  let resposta;
+  try {
+    resposta = await fetch(REPO_RELEASE, { headers: { "Accept": "application/vnd.github+json" } });
+  } catch (e) {
+    throw new Error("sem acesso ao GitHub agora");
+  }
+  if (resposta.status === 403) throw new Error("o GitHub pediu uma pausa; tente em alguns minutos");
+  if (!resposta.ok) throw new Error("o GitHub respondeu " + resposta.status);
+  const dados = await resposta.json();
+  const nova = String(dados.tag_name || "").replace(/^v/, "");
+  const apk = (dados.assets || []).find((a) => /\.apk$/i.test(a.name));
+  if (!nova) throw new Error("não entendi a resposta do GitHub");
+  if (!apk) throw new Error("a versão " + nova + " foi publicada sem APK");
+  const atual = versaoAtual();
+  return { atual: atual, nova: nova, url: apk.browser_download_url,
+           tamanho: Math.round((apk.size || 0) / 1024), maisNova: compararVersao(nova, atual) > 0 };
+}
+
+async function verificarAtualizacao(instalar) {
+  const saida = $("atualiza-res");
+  if (saida) saida.textContent = "procurando versão nova...";
+  try {
+    const achado = await procurarAtualizacao();
+    let texto;
+    if (!achado.maisNova) {
+      texto = "Você já está na " + achado.atual + ", a mais nova publicada.";
+      if (saida) saida.textContent = texto;
+      return texto;
+    }
+    texto = "Saiu a " + achado.nova + " (você tem a " + achado.atual + "), "
+      + achado.tamanho + " KB. Vou abrir o download; o Android pergunta se instala.";
+    if (saida) saida.textContent = texto;
+    if (instalar) {
+      if (ponte && ponte.atualizar) ponte.atualizar(achado.url);
+      else window.open(achado.url, "_blank");
+    }
+    return texto;
+  } catch (e) {
+    if (saida) saida.textContent = e.message;
+    return "Atualização: " + e.message;
+  }
 }
 
 /* ═══ comandos que o celular resolve sozinho, sem gastar cota ═════════════ */
@@ -1248,6 +1322,10 @@ function comandoLocal(texto) {
   }
   if (/^backup$|^exportar tudo$/.test(t)) return exportarTudo();
   if (/^(?:limpar|apagar) (?:a )?conversa$/.test(t)) { limparConversa(); return null; }
+  if (/^(?:atualizar|atualiza|tem vers[ãa]o nova|nova vers[ãa]o|verificar atualiza)/.test(t)) {
+    const soConsultar = /^(?:tem vers|nova vers|verificar)/.test(t);
+    return verificarAtualizacao(!soConsultar);
+  }
   if (/^colar$/.test(t) || /^colar da área/.test(t)) {
     if (ponte && ponte.colar) {
       const texto = String(ponte.colar() || "");
@@ -1269,6 +1347,7 @@ $("chip-ferramentas").addEventListener("click", () => {
   const casa = casaCfg();
   if (casa.url) $("f-ha-url").value = casa.url;
   if (casa.entidade) $("f-ha-ent").value = casa.entidade;
+  if ($("versao-app")) $("versao-app").textContent = versaoAtual();
   $("ferramentas").showModal();
 });
 $("f-fechar").addEventListener("click", () => $("ferramentas").close());
@@ -1286,6 +1365,9 @@ $("chip-maos").addEventListener("click", () => {
   pintar(cfg.maosLivres
     ? "Mãos livres ligado: depois de responder eu volto a escutar. Toque para desligar."
     : "Mãos livres desligado.", "sys");
+});
+$("chip-atualizar").addEventListener("click", () => {
+  pintar(verificarAtualizacao(false), "sys");
 });
 $("chip-pc").addEventListener("click", () => {
   $("chip-ferramentas").click();
@@ -1310,6 +1392,8 @@ $("f-lembrar-fato").addEventListener("click", () => {
   const fato = lembrarFato($("f-fato").value);
   if (fato) { $("f-fato").value = ""; pintar("Guardei: " + fato, "sys"); }
 });
+$("f-atualizar-ver").addEventListener("click", () => verificarAtualizacao(false));
+$("f-atualizar-baixar").addEventListener("click", () => verificarAtualizacao(true));
 $("f-exportar").addEventListener("click", () => pintar(exportarTudo(), "sys"));
 $("f-limpar").addEventListener("click", limparConversa);
 document.querySelectorAll("[data-vol]").forEach((botao) => {

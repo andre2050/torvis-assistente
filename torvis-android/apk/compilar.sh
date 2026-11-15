@@ -6,7 +6,7 @@ BT="${ANDROID_HOME:?defina ANDROID_HOME}/build-tools/34.0.0"
 AJ="${ANDROID_HOME}/platforms/android-34/android.jar"
 cd "$(dirname "$0")"
 rm -rf build && mkdir -p build/gen build/classes build/assets
-cp ../../TORVIS-2026-Android.html build/assets/index.html
+cp ../TORVIS-2026-Android.html build/assets/index.html
 "$BT/aapt2" compile --dir res -o build/res.zip
 "$BT/aapt2" link -o build/base.apk -I "$AJ" --manifest AndroidManifest.xml \
   -A build/assets --java build/gen --min-sdk-version 23 --target-sdk-version 34 build/res.zip
