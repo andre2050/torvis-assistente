@@ -13,7 +13,7 @@ if not exist ".venv\Scripts\python.exe" (
     exit /b 1
 )
 
-".venv\Scripts\python.exe" main.py
+".venv\Scripts\python.exe" iniciar_auto.py
 set "CODIGO=%ERRORLEVEL%"
 if not "%CODIGO%"=="0" (
     echo.

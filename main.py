@@ -3212,6 +3212,37 @@ def main():
             print("\n🔴 Shutting down...")
 
     threading.Thread(target=runner, daemon=True).start()
+
+    # ── atualização automática ────────────────────────────────────────────────
+    # A thread consulta a fonte oficial de tempos em tempos e deixa o pacote
+    # pronto. A aplicação acontece na próxima abertura, pelo iniciar_auto.py.
+    try:
+        from core import autoupdate
+
+        def avisar(preparado: dict) -> None:
+            versao = preparado.get("remote_version") or preparado.get("version")
+            texto = (f"Versão {versao} baixada e verificada.\n\n"
+                     "Ela será aplicada automaticamente na próxima vez que você abrir o TORVIS.")
+            try:
+                ui._content_sig.emit("ATUALIZAÇÃO PRONTA", texto)
+            except Exception:
+                print(f"[Atualização] {versao} preparada.")
+
+        autoupdate.iniciar_vigia(ao_preparar=avisar)
+
+        recente = autoupdate.atualizacao_recem_aplicada()
+        if recente:
+            try:
+                ui._content_sig.emit(
+                    "ATUALIZADO",
+                    f"Versão {recente.get('version')} aplicada automaticamente "
+                    f"({recente.get('files')} arquivos).\n\n"
+                    f"Você estava na {recente.get('previous')}.")
+            except Exception:
+                pass
+    except Exception as exc:
+        print(f"[Atualização] vigia indisponível: {exc}")
+
     ui.root.mainloop()
 
     # The window is closed: write the session summary, stop the engines, go.

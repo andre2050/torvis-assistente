@@ -3456,7 +3456,7 @@ class MainWindow(QMainWindow):
             from core.paths import APP_DIR
             aplicador = APP_DIR / "APLICAR-ATUALIZACAO.bat"
             if not aplicador.is_file():
-                self.toast("Aplicador não encontrado; use APLICAR-ATUALIZACAO.bat na pasta do app.")
+                self._log.append_log("ERR: aplicador não encontrado; use APLICAR-ATUALIZACAO.bat na pasta do app.")
                 return
             import subprocess
             subprocess.Popen(["cmd", "/c", "start", "", str(aplicador)],
@@ -3466,7 +3466,6 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(400, QApplication.quit)
         except Exception as exc:
             self._log.append_log(f"ERR: não foi possível iniciar o aplicador: {exc}")
-            self.toast(f"Falha ao iniciar o aplicador: {exc}")
 
     def _atualizar_sistema(self):
         """Verifica o GitHub oficial e prepara uma atualização validada em background."""
