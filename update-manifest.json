@@ -1,6 +1,6 @@
 {
   "product": "T.O.R.V.I.S 2026",
-  "version": "6.6.1",
+  "version": "6.6.2",
   "channel": "stable",
   "format": 1,
   "files": {
@@ -8,6 +8,7 @@
     "AGENTE-AUTONOMO-v5.4.0.md": "59394fefc34ef388e0420ab58373dfcf5e89e8aea090360a14a634169b03af9a",
     "AGENTS.md": "aa39de42142937668d6239a1236c6b5732ee10ef19a287174eb2c955ee2f921a",
     "APLICAR-ATUALIZACAO.bat": "ab872ba661ccef29e322248ee3780c6a4232046f911a9cb31a18ab32e75dbde2",
+    "ATUALIZACAO-MANUAL.md": "0dbee33847e3bebd5a898d3098719e4b501c37822ed85e48b1db394da60b2b0b",
     "ATUALIZACAO-v6.5.0.md": "1f589d5db3f16eafbc4b9646008f7b00e203d4ca252d0368b61541857d6f87e6",
     "ATUALIZADOR-GITHUB-v5.6.1.md": "b5e55ded91df846845457c4f549c49e410a36990f22c3c230ba99268f112af13",
     "CAPACIDADES-v6.6.0.md": "7fb292042b4d33a56a7a8e9a5338e43b94f9f5ec6fc2fb1d11bab7514f030c6d",
@@ -54,7 +55,7 @@
     "RELEASE-v6.2.0.md": "99c34b003562ea08347336e89ab7c69b05be2cbd3c6b014f08847fcc9095765e",
     "RELEASE-v6.3.0.md": "fdfac89b6696d0c9bb75f05b6af8cfba6a0a81f755e30501624eb88b7e208fb5",
     "TRILHA-TESTES-v6.6.1.md": "b0550a5ff92630c5ed7000d3d793e32f79f0a8be87efe104439418bb848a4c91",
-    "VERSAO.txt": "b7dcf03d389a39e5471667573a7cb0287ed2f089b3bf6564d57d990747cbf78d",
+    "VERSAO.txt": "8ed5bf0c52d1de4d5a9ec57ccbda83e2cc927c0c1e0034182689834bdfdaf215",
     "VISAO-INTELIGENTE-v5.2.0.md": "030ef362cdf4030684aed52900804dc7c847a8baacbe41fcfc93d341dfdc6be2",
     "actions/adaptive_intelligence.py": "ddf8f2b2c276ca29b594f97d44aa1b97dd62c5f10643a6c2ebf5d08abfb81179",
     "actions/autonomous_planner.py": "f0bb7dd68398c24e00439fa37cdf4caac0ca494c71e3b3ce4888835234cb9e86",
@@ -165,7 +166,7 @@
     "core/undo.py": "b52a0a112d9a375bce41bac8f347a7bf3f16bdded984bdf7589b13e3ef81fe84",
     "core/update_manager.py": "87569ca54f6d11182b47d77f988216dc328eca043e8442a94c9f74bd5c005834",
     "core/userdata.py": "c962a75a643796de783f23c2528cb86b0a9907edc33d3509c6371630900122aa",
-    "core/version.py": "2987442e1fb4992c67bde88d49e79e192f1da86bc0c125ef0a11ae95decf645b",
+    "core/version.py": "43daf546e7a7abb9c1afa66774cdc45dfbfc44a1f375cc57b81d673262d6f3a3",
     "core/viseme.py": "80ca3bc752a230e39542adfa575b07e1e998aa0e43492fc9488b3ed22574f0d9",
     "core/wake_word.py": "67365e05aa210f063deaafdf63d6cbbdd8beb1ce7576ec52c47778111e2cce9c",
     "dashboard/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -224,6 +225,7 @@
     "tests/test_adaptive_550.py": "8fa41631fdc65d3c4e8f828dca0ba8fea50bf64d4b13853d2ec215b2b261d046",
     "tests/test_aplicar_v6_2.py": "6008022f41a49906cb32550b1e055c31df8c8e2346db32f79decda6fb3d321d4",
     "tests/test_atualizacao_um_clique_v6_5.py": "231c3ad306bd83f08b4df6ac21498d1496d9c00ddfd0b870be19d27496c10490",
+    "tests/test_atualizador_manual.py": "4f2df8762a45cfb30fba552dec28538fa8c32e91949559747579caf2efe515ce",
     "tests/test_autonomous_540.py": "0286baeb778cc5aa5e1726ae8e48a424f3c9848ec91dbe08dd1aaf01002febef",
     "tests/test_autoupdate_v6_3.py": "e7c0177319f78de55553924f980cbff61e3dca84557f558e3c942c7bfee70d5c",
     "tests/test_capacidades_v6_6.py": "fb5689f7e781854458cccd5d10e78155771e0ea2ab34924a2c2a74efa6d011c9",
@@ -252,12 +254,13 @@
     "tests/test_updater_561.py": "62ac2bfcf488768aca178d4c3a25b9e4dedc12459e82bbf797969d09b90a3360",
     "tests/test_vision_520.py": "ad74c05e2074d6ae2d3c0ea411dd4fc53238fc65ade9e50b644f25c01558836b",
     "tools/aplicar_atualizacao.py": "a83cc32848e65bfc2c5f230c07af3672c032ae015582da16a50d0e036eb02795",
+    "tools/atualizar_manual.py": "ae2ac81340ccea09db2ddabd2e9b923364060c9a9a0058d690c3008879c8c482",
     "tools/gerar_pacote.py": "6713b54202bc5a52b85fed29113d8930c1d462eeac1c57fdef80647c42d8bc12",
     "tools/reabrir_apos_sair.py": "ef50be243a761d9bfa333271c0a3f05e86c12301a7e7f978b339a9475947e072",
     "tools/render_hub_grande.py": "013bc7a7ef45649ab6c574918f907913d45faabfefb814230ecac08f1e78913c",
     "tools/render_hubs.py": "c9db6ac0daa804624ff00eb9fb3a041434c36e9ba214b48a40daaaa8fa0d804f",
     "ui.py": "30fbf9428f211a164c81287014cb436cc714866c494ee1e7c76d7c3836eaf6a4",
     "update.example.json": "772524a4c007b10a65a070d301b4d24a0c9ef427d8d7e7f6559970fc3df66521",
-    "update.json": "84435ad9b3c50be4b4e8272f1199589e107c2591b71a131432d42737c99d7704"
+    "update.json": "b428e82886b53f37b9095924f456c08cee527958cf964170b0321340199ea111"
   }
 }

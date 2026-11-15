@@ -1,7 +1,7 @@
 {
-  "version": "6.6.1",
+  "version": "6.6.2",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.1/TORVIS-Assistente-v6.6.1.zip",
-  "sha256": "9b6f1905d78adbf31be7782995f4892e7c3d51ec1a924171e456ef087ee92048",
-  "release_notes": "Trilha de testes para devs: cria e roda testes de UI em Selenium e Puppeteer, testa APIs com assercoes de status/JSON/tempo, publica resultado em Azure Test Plans, Jira, Test.ai ou JUnit XML, e gera pipeline de CI."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.2/TORVIS-Assistente-v6.6.2.zip",
+  "sha256": "6746b6f9a5810ca58be7afbb5658359a187ba99d1b089bcd61618b9de88af55f",
+  "release_notes": "Atualizador manual (tools/atualizar_manual.py): baixa, confere SHA-256 e instala com o app fechado, preservando config, memorias, notas e tarefas. Inclui modo diagnostico para achar o motivo da falha do botao."
 }
