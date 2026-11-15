@@ -333,7 +333,7 @@
   <p class="hint">A chave fica só neste aparelho. Nada é enviado para outro lugar além do Google.</p>
 
   <label for="chave">Chave da API Gemini</label>
-  <input id="chave" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false">
+  <input id="chave" type="password" placeholder="AIza... ou AQ..." autocomplete="off" spellcheck="false">
 
   <label for="nivel">Escada de modelos</label>
   <select id="nivel">
@@ -445,10 +445,10 @@ function falar(texto) {
 }
 
 async function pedir(modelo, corpo, sinal) {
-  const url = API + modelo + ":generateContent?key=" + encodeURIComponent(cfg.chave);
+  const url = API + modelo + ":generateContent";
   const resp = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": cfg.chave },
     body: JSON.stringify(corpo),
     signal: sinal
   });
@@ -469,7 +469,7 @@ function textoDaResposta(dados) {
 function motivoDeErro(status, dados) {
   const bruto = JSON.stringify(dados || {});
   if (bruto.includes("API_KEY_INVALID") || bruto.includes("API key not valid"))
-    return "Chave recusada pelo Google. Confira se copiou inteira.";
+    return "Chave recusada pelo Google. Confira se copiou inteira (a nova começa com AQ. e pode ter pontos).";
   if (bruto.includes("SERVICE_DISABLED") || bruto.includes("has not been used in project"))
     return "A API Gemini não está ativada no projeto dessa chave.";
   if (bruto.includes("PERMISSION_DENIED"))
@@ -480,6 +480,8 @@ function motivoDeErro(status, dados) {
     return "Modelo aposentado para esta chave.";
   if (status >= 500)
     return "Servidor do Google indisponível agora.";
+  if (status === 400)
+    return "O Google recusou o pedido. Se a chave é AQ., gere outra em aistudio.google.com/apikey.";
   return "Falha " + status + ".";
 }
 
@@ -609,12 +611,15 @@ async function diagnosticar() {
   if (!chave) { saida.textContent = "Cole a chave primeiro."; return; }
   saida.innerHTML = "<b>1.</b> Formato… ";
 
-  const formato = /^AIza[0-9A-Za-z_\-]{20,}$/.test(chave);
-  saida.innerHTML = "<b>1.</b> Formato da chave: " + (formato ? "✓ parece certa" : "⚠ fora do padrão (segue?)");
+  const formatoAntigo = /^AIza[0-9A-Za-z_\-]{20,}$/.test(chave);
+  const formatoNovo = /^AQ\.[0-9A-Za-z_\-.]{10,}$/.test(chave);
+  const formato = formatoAntigo || formatoNovo;
+  saida.innerHTML = "<b>1.</b> Formato da chave: "
+    + (formatoAntigo ? "✓ AIza (formato antigo)" : formatoNovo ? "✓ AQ. (formato novo)" : "⚠ fora do padrão (segue?)");
   saida.innerHTML += "\n<b>2.</b> Listando modelos…";
 
   try {
-    const lista = await fetch(API + "?key=" + encodeURIComponent(chave));
+    const lista = await fetch(API, { headers: { "x-goog-api-key": chave } });
     const dados = await lista.json().catch(() => ({}));
     if (!lista.ok) {
       saida.innerHTML += " ✗ " + motivoDeErro(lista.status, dados);

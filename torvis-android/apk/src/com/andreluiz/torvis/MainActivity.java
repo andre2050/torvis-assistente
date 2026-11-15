@@ -149,7 +149,7 @@ public class MainActivity extends Activity {
         public String plataforma() { return "android"; }
 
         @JavascriptInterface
-        public String versao() { return "6.6.7"; }
+        public String versao() { return "6.6.8"; }
 
         /* atualização: entrega o APK novo para o Android instalar */
         @JavascriptInterface
