@@ -169,6 +169,7 @@
   <button class="chip" id="chip-ferramentas">🧰 Ferramentas</button>
   <button class="chip" id="chip-lanterna">🔆 Lanterna</button>
   <button class="chip" id="chip-bateria">🔋 <span id="chip-bateria-txt">—</span></button>
+  <button class="chip" id="chip-maos">🎧 Mãos livres</button>
   <button class="chip" id="chip-pc">💻 PC</button>
 </div>
 
@@ -330,7 +331,7 @@ const chat = $("chat"), anel = $("anel"), estado = $("estado"), status = $("stat
 
 const ponte = (typeof window.AndroidPonte === "object" && window.AndroidPonte) ? window.AndroidPonte : null;
 
-const cfg = Object.assign({ chave: "", nivel: "fast", voz: true },
+const cfg = Object.assign({ chave: "", nivel: "fast", voz: true, maosLivres: false },
   JSON.parse(localStorage.getItem("torvis.cfg") || "{}"));
 let historico = JSON.parse(localStorage.getItem("torvis.chat") || "[]");
 
@@ -480,7 +481,7 @@ async function enviar() {
   const texto = campo.value.trim();
   if (!texto || ocupado) return;
 
-  const local = comandoLocal(texto);          // resolve sem API: economiza cota
+  const local = await comandoLocal(texto);   // resolve sem API: economiza cota
   if (local) {
     campo.value = "";
     campo.style.height = "auto";
@@ -598,6 +599,14 @@ async function diagnosticar() {
 }
 
 /* o que a casca Android chama */
+window.torvisFalouFim = () => {
+  defEstado("pronto", "");
+  if (cfg.maosLivres && ponte && !ocupado) {
+    defEstado("ouvindo", "ouvindo");
+    try { ponte.ouvir(); } catch (e) { }
+  }
+};
+
 window.torvisTexto = (texto) => {
   $("mic").classList.remove("ativo");
   defEstado("pronto", "");
@@ -834,6 +843,62 @@ function atualizarEstadoAparelho() {
   } catch (e) { /* estado é enfeite */ }
 }
 
+/* ═══ serviços públicos, sem chave e sem custo ════════════════════════════ */
+const TEMPO_NOMES = {0:"céu limpo",1:"quase limpo",2:"parcialmente nublado",3:"nublado",
+  45:"neblina",48:"neblina gelada",51:"garoa fraca",53:"garoa",55:"garoa forte",
+  61:"chuva fraca",63:"chuva",65:"chuva forte",66:"chuva congelante",67:"chuva congelante",
+  71:"neve fraca",73:"neve",75:"neve forte",77:"granizo",80:"pancadas fracas",
+  81:"pancadas",82:"pancadas fortes",85:"neve em pancadas",86:"neve forte",
+  95:"tempestade",96:"tempestade com granizo",99:"tempestade forte"};
+
+async function consultarClima(cidade) {
+  let lat, lon, nome;
+  if (cidade) {
+    const busca = await fetch("https://geocoding-api.open-meteo.com/v1/search?name="
+      + encodeURIComponent(cidade) + "&count=1&language=pt&format=json").then((r) => r.json());
+    const achado = (busca.results || [])[0];
+    if (!achado) throw new Error("não achei o lugar " + cidade);
+    lat = achado.latitude; lon = achado.longitude;
+    nome = achado.name + (achado.admin1 && achado.admin1 !== achado.name ? ", " + achado.admin1 : "");
+  } else {
+    const loc = ponte && ponte.localizacao ? String(ponte.localizacao() || "") : "";
+    if (!loc || loc.indexOf(",") < 0) {
+      throw new Error("diga a cidade (ex: clima em Fortaleza) ou libere a localização");
+    }
+    const partes = loc.split(",");
+    lat = Number(partes[0]); lon = Number(partes[1]);
+    nome = "onde você está";
+    try {
+      const volta = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="
+        + lat + "&longitude=" + lon + "&localityLanguage=pt").then((r) => r.json());
+      const lugar = volta.city || volta.locality || volta.principalSubdivision;
+      if (lugar) nome = lugar + (volta.principalSubdivision && volta.principalSubdivision !== lugar
+        ? ", " + volta.principalSubdivision : "");
+    } catch (e) { /* sem o nome, a temperatura ainda serve */ }
+  }
+  const dados = await fetch("https://api.open-meteo.com/v1/forecast?latitude=" + lat
+    + "&longitude=" + lon
+    + "&current=temperature_2m,weather_code&daily=precipitation_probability_max,temperature_2m_max,temperature_2m_min&timezone=auto")
+    .then((r) => r.json());
+  const agora = dados.current || {};
+  const dia = dados.daily || {};
+  const texto = TEMPO_NOMES[agora.weather_code] || "tempo indefinido";
+  const chuva = (dia.precipitation_probability_max || [0])[0];
+  const maxima = Math.round((dia.temperature_2m_max || [0])[0]);
+  const minima = Math.round((dia.temperature_2m_min || [0])[0]);
+  return "Agora em " + nome + ": " + Math.round(agora.temperature_2m) + "°C, " + texto
+    + ". Hoje entre " + minima + "°C e " + maxima + "°C, chance de chuva " + chuva + "%.";
+}
+
+async function consultarCep(numero) {
+  const limpo = String(numero).replace(/\D/g, "");
+  if (limpo.length !== 8) throw new Error("o CEP precisa ter 8 dígitos");
+  const dados = await fetch("https://viacep.com.br/ws/" + limpo + "/json/").then((r) => r.json());
+  if (dados.erro) throw new Error("CEP não encontrado");
+  const rua = (dados.logradouro || "rua não informada") + (dados.bairro ? ", " + dados.bairro : "");
+  return rua + " - " + dados.localidade + "/" + dados.uf;
+}
+
 /* ═══ comandos que o celular resolve sozinho, sem gastar cota ═════════════ */
 function comandoLocal(texto) {
   const t = String(texto || "").toLowerCase().trim();
@@ -902,6 +967,79 @@ function comandoLocal(texto) {
   if ((m = t.match(/^senha(?: de)?\s*(\d{2})?$/))) {
     return "Senha: " + gerarSenha(m[1] || 16);
   }
+  if ((m = t.match(/^brilho\s+(\d{1,3})%?$/))) {
+    if (!ponte || !ponte.definirBrilho) return null;
+    ponte.definirBrilho(Number(m[1]));
+    return "Brilho em " + Math.min(100, Math.max(5, Number(m[1]))) + "% (só dentro do TORVIS).";
+  }
+  if (/^(aumentar|subir)\s+(o\s+)?brilho/.test(t) || /^(diminuir|baixar)\s+(o\s+)?brilho/.test(t)) {
+    if (!ponte || !ponte.brilho) return null;
+    const subir = /^(aumentar|subir)/.test(t);
+    const atual = ponte.brilho() > 0 ? ponte.brilho() : 50;
+    const alvo = Math.max(5, Math.min(100, atual + (subir ? 20 : -20)));
+    ponte.definirBrilho(alvo);
+    return "Brilho em " + alvo + "%.";
+  }
+  if ((m = t.match(/^(?:me\s+)?(?:acorde|despertar|acordar|despertador)(?:\s+(?:as|às))?\s*(\d{1,2})(?:[:h]\s*(\d{2})?)?$/))) {
+    if (!ponte || !ponte.despertar) return null;
+    const hora = Number(m[1]), minuto = Number(m[2] || 0);
+    if (hora > 23 || minuto > 59) return "essa hora não existe.";
+    return "Pronto: " + ponte.despertar(hora, minuto, "TORVIS") + ".";
+  }
+  if ((m = t.match(/^(?:timer|temporizador|cronômetro|cronometro)\s+(\d+)\s*(seg|segundos?|min|minutos?|h|horas?)$/))) {
+    if (!ponte || !ponte.timer) return null;
+    const quantidade = Number(m[1]);
+    const segundos = /^(h|hora)/.test(m[2]) ? quantidade * 3600
+      : /^seg/.test(m[2]) ? quantidade : quantidade * 60;
+    return "Pronto: " + ponte.timer(segundos, "TORVIS") + ".";
+  }
+  if ((m = t.match(/^(pausar|pausa|tocar|continuar|parar|próxima|proxima|anterior)\b.*(música|musica|som|áudio|audio)$/))) {
+    if (!ponte || !ponte.midia) return null;
+    const acao = /^paus/.test(m[1]) ? "pause" : /^(tocar|continuar)/.test(m[1]) ? "play"
+      : /^(próxima|proxima)/.test(m[1]) ? "next" : /^anterior/.test(m[1]) ? "prev" : "stop";
+    const r = ponte.midia(acao);
+    const nomes = { pause: "Música pausada.", play: "Tocando.", next: "Próxima faixa.",
+                    prev: "Faixa anterior.", stop: "Parei a música." };
+    return r === "ok" ? nomes[acao] : r;
+  }
+  if ((m = t.match(/^(?:discar|ligar para)\s+([0-9+*#\s().-]{8,})$/))) {
+    if (!ponte || !ponte.discar) return null;
+    return ponte.discar(m[1]) + ".";
+  }
+  if (/^(onde estou|minha localiza|minha localização|localização)/.test(t)) {
+    if (!ponte || !ponte.localizacao) return null;
+    const loc = String(ponte.localizacao() || "");
+    if (!loc) return "Ainda não tenho sua posição. Libere a localização e tente de novo.";
+    const partes = loc.split(",");
+    return "Você está em " + Number(partes[0]).toFixed(4) + ", " + Number(partes[1]).toFixed(4)
+      + ".\nMapa: https://www.google.com/maps?q=" + loc;
+  }
+  if ((m = t.match(/^(?:clima|previsão|previsao|tempo|vai chover)(?:\s+(?:em|de|no|na)\s+(.+?))?$/))) {
+    return consultarClima(m[1]).catch((e) => "Clima: " + e.message);
+  }
+  if ((m = t.match(/^cep\s+(\d{5}-?\d{3})$/))) {
+    return consultarCep(m[1]).catch((e) => "CEP: " + e.message);
+  }
+  if (/^(espaço|espaco|armazenamento|memória|memoria)\b/.test(t)) {
+    if (!ponte || !ponte.espaco) return null;
+    return "Armazenamento: " + ponte.espaco() + ".";
+  }
+  if ((m = t.match(/^abrir (?:o )?(?:app|aplicativo)\s+(.+)$/))) {
+    if (ponte && ponte.abrirApp) {
+      const r = ponte.abrirApp(m[1]);
+      return r === "ok" ? "Abri o " + m[1] + "." : r;
+    }
+    return null;
+  }
+  if (/^colar$/.test(t) || /^colar da área/.test(t)) {
+    if (ponte && ponte.colar) {
+      const texto = String(ponte.colar() || "");
+      if (!texto) return "A área de transferência está vazia.";
+      $("texto").value = texto;
+      return "Colei aqui: " + texto.slice(0, 200);
+    }
+    return null;
+  }
   return null;
 }
 
@@ -920,6 +1058,16 @@ $("chip-lanterna").addEventListener("click", () => alternarLanterna());
 $("f-lanterna").addEventListener("click", () => alternarLanterna());
 $("chip-bateria").addEventListener("click", () => {
   $("chip-ferramentas").click();
+});
+$("chip-maos").addEventListener("click", () => {
+  if (!ponte) { pintar("Mãos livres só no APK: é o aparelho que escuta.", "sys"); return; }
+  cfg.maosLivres = !cfg.maosLivres;
+  salvarCfg();
+  $("chip-maos").classList.toggle("on", cfg.maosLivres);
+  defEstado(cfg.maosLivres ? "mãos livres" : "pronto", "");
+  pintar(cfg.maosLivres
+    ? "Mãos livres ligado: depois de responder eu volto a escutar. Toque para desligar."
+    : "Mãos livres desligado.", "sys");
 });
 $("chip-pc").addEventListener("click", () => {
   pintar("O PC não está pareado ainda. Essa ponte vem na próxima etapa; "
@@ -1025,6 +1173,7 @@ $("diagnosticar").addEventListener("click", diagnosticar);
   redesenhar();
   status.className = cfg.chave ? "dot ok" : "dot";
   if (ponte) {
+    if (cfg.maosLivres) $("chip-maos").classList.add("on");
     const dica = $("aviso-instalar");
     if (dica) dica.textContent = "Versão Android: a voz usa o microfone e o falante do aparelho.";
   } else if (!("speechSynthesis" in window)) cfg.voz = false;

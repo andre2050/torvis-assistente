@@ -19,7 +19,19 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.StatFs;
+import android.os.Environment;
+import android.provider.AlarmClock;
+import android.provider.CalendarContract;
+import android.provider.Settings;
+import android.view.KeyEvent;
+import android.view.WindowManager;
+import android.content.pm.ResolveInfo;
+import android.text.TextUtils;
+
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.speech.RecognitionListener;
@@ -49,6 +61,7 @@ public class MainActivity extends Activity {
     private static final int PEDIDO_MIC = 71;
     private static final int PEDIDO_CAMERA = 73;
     private static final int PEDIDO_NOTIF = 74;
+    private static final int PEDIDO_LOCAL = 75;
     private static final String CANAL = "torvis.lembretes";
 
     private WebView tela;
@@ -106,6 +119,15 @@ public class MainActivity extends Activity {
                     voz.setLanguage(Locale.getDefault());
                 }
                 vozPronta = true;
+                voz.setOnUtteranceProgressListener(new android.speech.tts.UtteranceProgressListener() {
+                    @Override public void onStart(String id) { }
+                    @Override public void onDone(String id) {
+                        if (tela != null) {
+                            tela.evaluateJavascript("window.torvisFalouFim && window.torvisFalouFim()", null);
+                        }
+                    }
+                    @Override public void onError(String id) { }
+                });
             }
         });
     }
@@ -127,7 +149,236 @@ public class MainActivity extends Activity {
         public String plataforma() { return "android"; }
 
         @JavascriptInterface
-        public String versao() { return "6.6.4"; }
+        public String versao() { return "6.6.5"; }
+
+        /* ── brilho da tela deste app ─────────────────────────────────────── */
+        @JavascriptInterface
+        public int brilho() {
+            try {
+                WindowManager.LayoutParams p = getWindow().getAttributes();
+                float v = p.screenBrightness;
+                if (v < 0) {
+                    try {
+                        return Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS) * 100 / 255;
+                    } catch (Exception e) { return -1; }
+                }
+                return Math.round(v * 100);
+            } catch (Exception e) { return -1; }
+        }
+
+        @JavascriptInterface
+        public boolean definirBrilho(final int porcentagem) {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try {
+                        float valor = Math.max(5, Math.min(100, porcentagem)) / 100f;
+                        WindowManager.LayoutParams p = getWindow().getAttributes();
+                        p.screenBrightness = valor;
+                        getWindow().setAttributes(p);
+                    } catch (Exception e) { }
+                }
+            });
+            return true;
+        }
+
+        @JavascriptInterface
+        public void telaAcesa(final boolean manter) {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try {
+                        if (manter) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    } catch (Exception e) { }
+                }
+            });
+        }
+
+        /* ── despertador, timer e agenda ──────────────────────────────────── */
+        @JavascriptInterface
+        public String despertar(int hora, int minuto, String rotulo) {
+            try {
+                Intent i = new Intent(AlarmClock.ACTION_SET_ALARM);
+                i.putExtra(AlarmClock.EXTRA_HOUR, Math.max(0, Math.min(23, hora)));
+                i.putExtra(AlarmClock.EXTRA_MINUTES, Math.max(0, Math.min(59, minuto)));
+                i.putExtra(AlarmClock.EXTRA_MESSAGE, rotulo == null ? "TORVIS" : rotulo);
+                i.putExtra(AlarmClock.EXTRA_SKIP_UI, true);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return String.format(Locale.getDefault(), "despertador para %02d:%02d", hora, minuto);
+            } catch (Exception e) { return "não consegui marcar o despertador: " + e.getMessage(); }
+        }
+
+        @JavascriptInterface
+        public String timer(int segundos, String rotulo) {
+            try {
+                Intent i = new Intent(AlarmClock.ACTION_SET_TIMER);
+                i.putExtra(AlarmClock.EXTRA_LENGTH, Math.max(5, segundos));
+                i.putExtra(AlarmClock.EXTRA_MESSAGE, rotulo == null ? "TORVIS" : rotulo);
+                i.putExtra(AlarmClock.EXTRA_SKIP_UI, true);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return "timer de " + (segundos / 60) + " min";
+            } catch (Exception e) { return "não consegui abrir o timer: " + e.getMessage(); }
+        }
+
+        @JavascriptInterface
+        public String evento(String titulo, long inicioMs, int minutos) {
+            try {
+                Intent i = new Intent(Intent.ACTION_INSERT);
+                i.setData(CalendarContract.Events.CONTENT_URI);
+                i.putExtra("title", titulo == null ? "Compromisso" : titulo);
+                i.putExtra("beginTime", inicioMs);
+                i.putExtra("endTime", inicioMs + Math.max(15, minutos) * 60000L);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return "abri a agenda com o evento";
+            } catch (Exception e) { return "não achei um app de agenda: " + e.getMessage(); }
+        }
+
+        /* ── música que já está tocando ───────────────────────────────────── */
+        @JavascriptInterface
+        public String midia(String acao) {
+            try {
+                int codigo;
+                String nome = acao == null ? "" : acao.toLowerCase();
+                if (nome.equals("play") || nome.equals("tocar")) codigo = KeyEvent.KEYCODE_MEDIA_PLAY;
+                else if (nome.equals("pause") || nome.equals("pausar")) codigo = KeyEvent.KEYCODE_MEDIA_PAUSE;
+                else if (nome.equals("next") || nome.equals("proxima")) codigo = KeyEvent.KEYCODE_MEDIA_NEXT;
+                else if (nome.equals("prev") || nome.equals("anterior")) codigo = KeyEvent.KEYCODE_MEDIA_PREVIOUS;
+                else codigo = KeyEvent.KEYCODE_MEDIA_STOP;
+
+                AudioManager som = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                long agora = android.os.SystemClock.uptimeMillis();
+                som.dispatchMediaKeyEvent(new KeyEvent(agora, agora, KeyEvent.ACTION_DOWN, codigo, 0));
+                som.dispatchMediaKeyEvent(new KeyEvent(agora, agora, KeyEvent.ACTION_UP, codigo, 0));
+                return "ok";
+            } catch (Exception e) { return "não consegui mexer na música: " + e.getMessage(); }
+        }
+
+        /* ── telefone ─────────────────────────────────────────────────────── */
+        @JavascriptInterface
+        public String discar(String numero) {
+            try {
+                String limpo = numero == null ? "" : numero.replaceAll("[^0-9+*#]", "");
+                if (limpo.isEmpty()) return "número vazio";
+                Intent i = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + limpo));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return "abri o discador com " + limpo;
+            } catch (Exception e) { return "não consegui abrir o discador: " + e.getMessage(); }
+        }
+
+        @JavascriptInterface
+        public String mensagem(String numero, String texto) {
+            try {
+                String limpo = numero == null ? "" : numero.replaceAll("[^0-9+]", "");
+                Intent i = new Intent(Intent.ACTION_SENDTO,
+                        Uri.parse("smsto:" + limpo));
+                i.putExtra("sms_body", texto == null ? "" : texto);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return "mensagem pronta no app de SMS" + (limpo.isEmpty() ? "" : " para " + limpo);
+            } catch (Exception e) { return "não consegui abrir o SMS: " + e.getMessage(); }
+        }
+
+        /* ── localização e mapas ──────────────────────────────────────────── */
+        @JavascriptInterface
+        public String localizacao() {
+            try {
+                if (!temPermissao(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                    pedirPermissao(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PEDIDO_LOCAL);
+                    return "";
+                }
+                LocationManager gps = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                Location melhor = null;
+                for (String provedor : new String[]{LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER}) {
+                    try {
+                        Location l = gps.getLastKnownLocation(provedor);
+                        if (l != null && (melhor == null || l.getTime() > melhor.getTime())) melhor = l;
+                    } catch (Exception e) { }
+                }
+                if (melhor == null) return "";
+                return melhor.getLatitude() + "," + melhor.getLongitude();
+            } catch (Exception e) { return ""; }
+        }
+
+        @JavascriptInterface
+        public String mapa(String consulta) {
+            try {
+                String alvo = consulta == null ? "" : consulta.trim();
+                String url = alvo.isEmpty()
+                        ? "geo:0,0?q="
+                        : "geo:0,0?q=" + Uri.encode(alvo);
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return "abrindo o mapa";
+            } catch (Exception e) { return "não consegui abrir o mapa: " + e.getMessage(); }
+        }
+
+        /* ── armazenamento ────────────────────────────────────────────────── */
+        @JavascriptInterface
+        public String espaco() {
+            try {
+                StatFs dados = new StatFs(Environment.getDataDirectory().getPath());
+                long livre = dados.getAvailableBytes();
+                long total = dados.getTotalBytes();
+                return String.format(Locale.getDefault(), "%.1f GB livres de %.0f GB",
+                        livre / 1073741824.0, total / 1073741824.0);
+            } catch (Exception e) { return "não consegui medir"; }
+        }
+
+        /* ── abrir app pelo nome que aparece na tela ──────────────────────── */
+        @JavascriptInterface
+        public String abrirApp(String nome) {
+            try {
+                String procurado = semAcento(nome == null ? "" : nome);
+                if (procurado.isEmpty()) return "qual app?";
+                Intent principal = new Intent(Intent.ACTION_MAIN);
+                principal.addCategory(Intent.CATEGORY_LAUNCHER);
+                String parcial = null;
+                for (ResolveInfo info : getPackageManager().queryIntentActivities(principal, 0)) {
+                    String rotulo = semAcento(String.valueOf(info.loadLabel(getPackageManager())));
+                    if (rotulo.equals(procurado)) {
+                        return abrirPacote(info.activityInfo.packageName);
+                    }
+                    if (parcial == null && rotulo.contains(procurado)) {
+                        parcial = info.activityInfo.packageName;
+                    }
+                }
+                if (parcial != null) return abrirPacote(parcial);
+                return "não achei app chamado " + nome;
+            } catch (Exception e) { return "não consegui procurar o app: " + e.getMessage(); }
+        }
+
+        @JavascriptInterface
+        public String colar() {
+            try {
+                ClipboardManager area = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (!area.hasPrimaryClip() || area.getPrimaryClip().getItemCount() == 0) return "";
+                CharSequence texto = area.getPrimaryClip().getItemAt(0).coerceToText(MainActivity.this);
+                return texto == null ? "" : texto.toString();
+            } catch (Exception e) { return ""; }
+        }
+
+        @JavascriptInterface
+        public void ajustes(String qual) {
+            try {
+                String acao = Settings.ACTION_SETTINGS;
+                if ("wifi".equals(qual)) acao = Settings.ACTION_WIFI_SETTINGS;
+                else if ("bluetooth".equals(qual)) acao = Settings.ACTION_BLUETOOTH_SETTINGS;
+                else if ("som".equals(qual)) acao = Settings.ACTION_SOUND_SETTINGS;
+                else if ("tela".equals(qual)) acao = Settings.ACTION_DISPLAY_SETTINGS;
+                else if ("bateria".equals(qual)) acao = Settings.ACTION_BATTERY_SAVER_SETTINGS;
+                Intent i = new Intent(acao);
+                if (Settings.ACTION_SETTINGS.equals(acao)) {
+                    i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:" + getPackageName()));
+                }
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            } catch (Exception e) { }
+        }
 
         /* voz */
         @JavascriptInterface
@@ -330,6 +581,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    private String abrirPacote(String pacote) {
+        try {
+            Intent i = getPackageManager().getLaunchIntentForPackage(pacote);
+            if (i == null) return "app não abre: " + pacote;
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            return "ok";
+        } catch (Exception e) { return "não abriu " + pacote; }
+    }
+
+    private static String semAcento(String texto) {
+        String t = texto == null ? "" : texto.toLowerCase(Locale.getDefault()).trim();
+        return t.replaceAll("[áàâãä]", "a").replaceAll("[éèêë]", "e")
+                .replaceAll("[íìîï]", "i").replaceAll("[óòôõö]", "o")
+                .replaceAll("[úùûü]", "u").replaceAll("ç", "c");
+    }
+
     /* ── microfone ───────────────────────────────────────────────────────── */
 
     private boolean temPermissao(String permissao) {
@@ -434,6 +702,8 @@ public class MainActivity extends Activity {
         } else if (codigo == PEDIDO_CAMERA) {
             if (liberou) aplicarLanterna(querLanterna);
             else avisarJs("Sem permissão de câmera não consigo acender a lanterna.");
+        } else if (codigo == PEDIDO_LOCAL) {
+            if (!liberou) avisarJs("Sem permissão de localização não consigo dizer onde você está.");
         } else if (codigo == PEDIDO_NOTIF) {
             if (!liberou) avisarJs("Sem permissão de notificação o lembrete não aparece na tela.");
         }
