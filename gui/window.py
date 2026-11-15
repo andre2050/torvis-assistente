@@ -1851,6 +1851,7 @@ class MainWindow(QMainWindow):
         # "&&": a single & in a button label is Qt's shortcut marker, and it
         # was being drawn as an underscore — "ENGINE _PROVIDERS".
         _btn("🔌  MOTOR && PROVEDORES", self._open_providers)
+        _btn("🎓  LABORATÓRIO  ·  AJUSTE FINO E CAPSTONE", self._open_laboratorio)
         _btn(f"↻  ATUALIZAR SISTEMA  ·  {APP_VERSION}", self._atualizar_sistema, self._BTN_PRI)
 
         w.adjustSize()
@@ -3030,6 +3031,28 @@ class MainWindow(QMainWindow):
         ov.changed.connect(self._on_providers_applied)
         self._centre_overlay(ov)
         self._providers_overlay = ov        # keep a reference so it isn't GC'd
+
+    def _open_laboratorio(self):
+        """Abre o laboratório: conjunto de ajuste fino e relatório do capstone.
+
+        Mesma regra do painel de provedores: o módulo é importado no clique. O
+        laboratório lê memória e escreve arquivo; nada disso pode acontecer
+        durante a construção do drawer, que é onde o usuário percebe atraso.
+        """
+        try:
+            from gui.finetuning_panel import LaboratorioOverlay
+        except ImportError:
+            self._log.append_log(
+                "SYS: O laboratório não está presente nesta cópia — "
+                "as memórias e o assistente seguem funcionando.")
+            return
+        try:
+            ov = LaboratorioOverlay(parent=self.centralWidget())
+        except Exception as e:
+            self._log.append_log(f"SYS: Laboratório indisponível: {e}")
+            return
+        self._centre_overlay(ov)
+        self._laboratorio_overlay = ov       # referência viva, para não ser coletado
 
     def _on_providers_applied(self):
         """Rebuild the session so the new engine takes over.
