@@ -79,5 +79,4 @@ microfone, áudio/SAPI, visão de tela, Gemini Live e o executável empacotado. 
 
 ## Licença
 
-Base herdada de **MARK 56 — JARVIS** (c) 2026 FatihMakes, com modificações deste projeto.
 Veja `LICENSE`.
