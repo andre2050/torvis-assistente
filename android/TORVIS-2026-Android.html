@@ -273,6 +273,42 @@
     <div class="res" id="f-ha-res"></div>
   </div>
 
+  <div class="bloco"><h3>O que o assistente sabe</h3>
+    <div class="campos">
+      <input class="mini" id="f-fato" placeholder="ex: prefiro respostas curtas" style="flex:2 1 150px">
+      <button class="mini" id="f-lembrar-fato">Guardar</button>
+    </div>
+    <div id="f-memoria"></div>
+  </div>
+
+  <div class="bloco"><h3>Computador (ponte do PC)</h3>
+    <p class="hint">No PC, abra o ponte_pc.py. Ele mostra o endereço e o código.</p>
+    <div class="campos">
+      <input class="mini" id="pc-end" placeholder="192.168.0.10:8787" style="flex:2 1 140px">
+      <input class="mini" id="pc-cod" placeholder="código" inputmode="numeric" style="flex:0 0 92px">
+      <button class="mini" id="pc-conectar">Conectar</button>
+    </div>
+    <div class="campos" style="margin-top:8px">
+      <button class="mini" data-pc="status">Status</button>
+      <button class="mini" data-pc="volume_menos">Vol −</button>
+      <button class="mini" data-pc="volume_mais">Vol +</button>
+      <button class="mini" data-pc="play">Pausar</button>
+    </div>
+    <div class="campos" style="margin-top:8px">
+      <button class="mini" data-pc="travar">Travar PC</button>
+      <button class="mini" data-pc="next">Próxima</button>
+      <button class="mini" data-pc="mudo">Mudo</button>
+    </div>
+    <div class="res" id="pc-res"></div>
+  </div>
+
+  <div class="bloco"><h3>Conversa e backup</h3>
+    <div class="campos">
+      <button class="mini" id="f-exportar">Exportar tudo</button>
+      <button class="mini" id="f-limpar">Limpar conversa</button>
+    </div>
+  </div>
+
   <div class="btns"><button class="principal" id="f-fechar">Fechar</button></div>
 </dialog>
 
@@ -441,7 +477,7 @@ async function perguntar(texto) {
   const nivel = ESCADA[cfg.nivel] ? cfg.nivel : "fast";
   const degraus = ESCADA[nivel];
   const corpo = {
-    systemInstruction: { parts: [{ text: SISTEMA }] },
+    systemInstruction: { parts: [{ text: SISTEMA + blocoMemoria() }] },
     contents: historico.slice(-12).map((m) => ({
       role: m.quem === "eu" ? "user" : "model",
       parts: [{ text: m.texto }]
@@ -899,6 +935,135 @@ async function consultarCep(numero) {
   return rua + " - " + dados.localidade + "/" + dados.uf;
 }
 
+/* ═══ memória do assistente (fica no aparelho) ════════════════════════════ */
+const memoria = () => JSON.parse(localStorage.getItem("torvis.memoria") || "[]");
+const guardarMemoria = (lista) => localStorage.setItem("torvis.memoria", JSON.stringify(lista.slice(-40)));
+
+function lembrarFato(texto) {
+  const limpo = String(texto || "").trim();
+  if (limpo.length < 3) return null;
+  const lista = memoria();
+  if (lista.some((f) => f.toLowerCase() === limpo.toLowerCase())) return limpo;
+  lista.push(limpo);
+  guardarMemoria(lista);
+  desenharMemoria();
+  return limpo;
+}
+
+function esquecerFato(pedaco) {
+  const alvo = String(pedaco || "").toLowerCase().trim();
+  const lista = memoria();
+  const ficam = lista.filter((f) => f.toLowerCase().indexOf(alvo) < 0);
+  guardarMemoria(ficam);
+  desenharMemoria();
+  return lista.length - ficam.length;
+}
+
+function blocoMemoria() {
+  const lista = memoria();
+  if (!lista.length) return "";
+  return "\n\nCoisas que ele já te contou (memória do aparelho; use com naturalidade, "
+    + "sem recitar a lista):\n- " + lista.join("\n- ");
+}
+
+function desenharMemoria() {
+  const alvo = $("f-memoria");
+  if (!alvo) return;
+  const lista = memoria();
+  alvo.innerHTML = "";
+  if (!lista.length) return;
+  lista.slice().reverse().forEach((fato) => {
+    const linha = document.createElement("div");
+    linha.className = "item";
+    linha.innerHTML = "<span>" + fato.replace(/</g, "&lt;") + "</span>";
+    const apagar = document.createElement("button");
+    apagar.textContent = "×";
+    apagar.onclick = () => { esquecerFato(fato); };
+    linha.appendChild(apagar);
+    alvo.appendChild(linha);
+  });
+}
+
+/* ═══ ponte com o computador ══════════════════════════════════════════════ */
+const pcCfg = () => JSON.parse(localStorage.getItem("torvis.pc") || "{}");
+
+function pcEndereco() {
+  const campo = $("pc-end") ? $("pc-end").value.trim() : "";
+  const bruto = campo || pcCfg().endereco || "";
+  if (!bruto) throw new Error("preencha o endereço que aparece no PC");
+  return (/^https?:\/\//.test(bruto) ? bruto : "http://" + bruto).replace(/\/+$/, "");
+}
+
+function pcCodigo() {
+  const campo = $("pc-cod") ? $("pc-cod").value.trim() : "";
+  const codigo = campo || pcCfg().codigo || "";
+  if (!codigo) throw new Error("preencha o código de 6 dígitos");
+  return codigo;
+}
+
+async function pcChamar(acao, args) {
+  const endereco = pcEndereco();
+  const codigo = pcCodigo();
+  localStorage.setItem("torvis.pc",
+    JSON.stringify({ endereco: endereco.replace(/^https?:\/\//, ""), codigo }));
+  let resposta;
+  try {
+    resposta = await fetch(endereco + "/execu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Codigo": codigo },
+      body: JSON.stringify({ acao: acao, args: args })
+    });
+  } catch (e) {
+    throw new Error("não alcancei o PC em " + endereco
+      + ". Mesma rede? O ponte_pc.py está aberto?");
+  }
+  if (resposta.status === 401) throw new Error("o código não confere com o do PC");
+  let dados = {};
+  try { dados = await resposta.json(); } catch (e) { }
+  if (!dados.ok) throw new Error(dados.erro || "o PC recusou o pedido");
+  return dados.resultado || "feito";
+}
+
+async function pcConectar() {
+  const saida = $("pc-res");
+  try {
+    const base = pcEndereco();
+    saida.textContent = "procurando o PC...";
+    const sonda = await fetch(base + "/ping").then((r) => r.json());
+    if (!sonda || !sonda.ok) throw new Error("aquele endereço não é a ponte do TORVIS");
+    const estado = await pcChamar("status", null);
+    saida.textContent = "conectado a " + sonda.pc + ". " + estado;
+    return true;
+  } catch (e) {
+    saida.textContent = e.message;
+    return false;
+  }
+}
+
+/* ═══ backup e limpeza ═════════════════════════════════════════════════════ */
+function exportarTudo() {
+  const dados = {
+    quando: new Date().toISOString(),
+    versao: (ponte && ponte.versao) ? ponte.versao() : "navegador",
+    memoria: memoria(), notas: notas(), lembretes: lembretes(),
+    conversa: historico.slice(-200),
+    preferencias: { nivel: cfg.nivel, voz: cfg.voz, maosLivres: cfg.maosLivres }
+  };
+  const texto = JSON.stringify(dados, null, 1);
+  if (ponte && ponte.compartilhar) ponte.compartilhar(texto);
+  else if (navigator.clipboard) navigator.clipboard.writeText(texto);
+  return "Backup de " + Math.round(texto.length / 1024)
+    + " KB pronto: notas, lembretes, memória e conversa.";
+}
+
+function limparConversa() {
+  historico.length = 0;
+  $("chat").innerHTML = "";
+  salvarChat();
+  $("ferramentas").close();
+  pintar("Conversa limpa. Memória e notas continuam salvas.", "sys");
+}
+
 /* ═══ comandos que o celular resolve sozinho, sem gastar cota ═════════════ */
 function comandoLocal(texto) {
   const t = String(texto || "").toLowerCase().trim();
@@ -1031,6 +1196,58 @@ function comandoLocal(texto) {
     }
     return null;
   }
+  if ((m = t.match(/^lembre(?:-se)? (?:que|de que) (.+)$/)) || (m = t.match(/^memorize (?:que )?(.+)$/))) {
+    const fato = lembrarFato(m[1]);
+    return fato ? "Guardei: " + fato : "Não entendi o que guardar.";
+  }
+  if (/^o que (?:você )?sabe (?:de|sobre) mim/.test(t) || /^minha mem[óo]ria$/.test(t)) {
+    const lista = memoria();
+    if (!lista.length) return "Ainda não sei nada sobre você. Diga “lembre que ...” e eu guardo.";
+    return "O que eu guardei:\n- " + lista.join("\n- ");
+  }
+  if ((m = t.match(/^esque[çc]a (?:que )?(.+)$/)) || (m = t.match(/^apague da mem[óo]ria:? (.+)$/))) {
+    const quantos = esquecerFato(m[1]);
+    return quantos ? "Esqueci " + quantos + " anotação(ões)." : "Não achei nada sobre isso.";
+  }
+  if (/^(?:no|pelo|para o) pc\b/.test(t)) {
+    const pedido = t.replace(/^(?:no|pelo|para o) pc\s*/, "").trim();
+    const falar = (r) => "PC: " + r;
+    const erro = (e) => "PC: " + e.message;
+
+    if (/^(?:desligar|desliga)/.test(pedido)) {
+      if (/confir/.test(pedido)) {
+        return pcChamar("desligar", { confirmar: true }).then(falar).catch(erro);
+      }
+      return "Desligar o PC é sério. Se for isso mesmo, responda: no pc desligar confirmo";
+    }
+    if (/^(?:status|como est|como ta)/.test(pedido)) {
+      return pcChamar("status", null).then(falar).catch(erro);
+    }
+    if (/^(?:aumenta|aumentar|sobe|subir).*vol/.test(pedido)) {
+      return pcChamar("volume_mais", null).then(falar).catch(erro);
+    }
+    if (/^(?:diminui|diminuir|baixa|baixar).*vol/.test(pedido)) {
+      return pcChamar("volume_menos", null).then(falar).catch(erro);
+    }
+    if (/^(?:mudo|silencio|silenciar)/.test(pedido)) {
+      return pcChamar("mudo", null).then(falar).catch(erro);
+    }
+    if (/^(?:pausa|pausar|toca|tocar|play)/.test(pedido)) {
+      return pcChamar("midia", "play").then(falar).catch(erro);
+    }
+    if (/^pr[óo]xima|^avan[çc]ar/.test(pedido)) {
+      return pcChamar("midia", "next").then(falar).catch(erro);
+    }
+    if (/^(?:trava|travar|bloqueia|bloquear)/.test(pedido)) {
+      return pcChamar("travar", null).then(falar).catch(erro);
+    }
+    if ((m = pedido.match(/^abr(?:ir|a)\s+(.+)$/))) {
+      return pcChamar("abrir", m[1]).then(falar).catch(erro);
+    }
+    return "No PC eu sei: status, volume, mudo, pausar, próxima, travar e abrir <site>.";
+  }
+  if (/^backup$|^exportar tudo$/.test(t)) return exportarTudo();
+  if (/^(?:limpar|apagar) (?:a )?conversa$/.test(t)) { limparConversa(); return null; }
   if (/^colar$/.test(t) || /^colar da área/.test(t)) {
     if (ponte && ponte.colar) {
       const texto = String(ponte.colar() || "");
@@ -1048,6 +1265,7 @@ $("chip-ferramentas").addEventListener("click", () => {
   atualizarEstadoAparelho();
   desenharLembretes();
   desenharNotas();
+  desenharMemoria();
   const casa = casaCfg();
   if (casa.url) $("f-ha-url").value = casa.url;
   if (casa.entidade) $("f-ha-ent").value = casa.entidade;
@@ -1070,9 +1288,30 @@ $("chip-maos").addEventListener("click", () => {
     : "Mãos livres desligado.", "sys");
 });
 $("chip-pc").addEventListener("click", () => {
-  pintar("O PC não está pareado ainda. Essa ponte vem na próxima etapa; "
-    + "o celular controla o próprio aparelho por enquanto.", "sys");
+  $("chip-ferramentas").click();
+  const salvo = pcCfg();
+  if (salvo.endereco && $("pc-end").value === "") $("pc-end").value = salvo.endereco;
+  setTimeout(() => { try { $("pc-end").scrollIntoView({ block: "center" }); } catch (e) { } }, 150);
 });
+$("pc-conectar").addEventListener("click", pcConectar);
+document.querySelectorAll("[data-pc]").forEach((botao) => {
+  botao.addEventListener("click", async () => {
+    const acao = botao.dataset.pc;
+    const args = (acao === "play" || acao === "next") ? (acao === "next" ? "next" : "play") : null;
+    const nome = (acao === "play" || acao === "next") ? "midia" : acao;
+    $("pc-res").textContent = "pedindo ao PC...";
+    try {
+      $("pc-res").textContent = await pcChamar(nome, args);
+      if (ponte && ponte.vibrar) ponte.vibrar(30);
+    } catch (e) { $("pc-res").textContent = e.message; }
+  });
+});
+$("f-lembrar-fato").addEventListener("click", () => {
+  const fato = lembrarFato($("f-fato").value);
+  if (fato) { $("f-fato").value = ""; pintar("Guardei: " + fato, "sys"); }
+});
+$("f-exportar").addEventListener("click", () => pintar(exportarTudo(), "sys"));
+$("f-limpar").addEventListener("click", limparConversa);
 document.querySelectorAll("[data-vol]").forEach((botao) => {
   botao.addEventListener("click", () => {
     if (!ponte) { pintar("Volume só no APK.", "sys"); return; }

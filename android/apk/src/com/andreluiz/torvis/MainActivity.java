@@ -149,7 +149,7 @@ public class MainActivity extends Activity {
         public String plataforma() { return "android"; }
 
         @JavascriptInterface
-        public String versao() { return "6.6.5"; }
+        public String versao() { return "6.6.6"; }
 
         /* ── brilho da tela deste app ─────────────────────────────────────── */
         @JavascriptInterface
