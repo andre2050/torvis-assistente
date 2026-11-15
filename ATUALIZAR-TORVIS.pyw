@@ -34,7 +34,15 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-MANIFESTO = "https://raw.githubusercontent.com/andre2050/torvis-assistente/main/update.json"
+# Duas fontes, e fica a de maior versão. O raw.githubusercontent segura cache por
+# minutos: logo depois de publicar, ele ainda devolve o manifesto antigo — foi o
+# que fez uma atualização "não mudar" sem dar erro. O endereço de release aponta
+# sempre para o último release publicado.
+FONTES = (
+    "https://github.com/andre2050/torvis-assistente/releases/latest/download/update.json",
+    "https://raw.githubusercontent.com/andre2050/torvis-assistente/main/update.json",
+)
+MANIFESTO = FONTES[0]
 TIMEOUT = 45.0
 TENTATIVAS = 3
 
@@ -93,13 +101,43 @@ def versao_instalada(app: Path) -> str:
     return "desconhecida"
 
 
-def ler_manifesto(url: str = MANIFESTO) -> dict:
-    alvo = f"{url}?t={int(time.time())}" if url.lower().startswith("http") else url
+def _tupla(versao: object) -> tuple[int, ...]:
+    partes = []
+    for pedaco in str(versao or "0").split("."):
+        digitos = "".join(c for c in pedaco if c.isdigit())
+        partes.append(int(digitos) if digitos else 0)
+    return tuple(partes)
+
+
+def _ler_uma(url: str, cache_bust: bool = True) -> dict:
+    alvo = url
+    if cache_bust and url.lower().startswith("http"):
+        alvo = f"{url}{'&' if '?' in url else '?'}t={int(time.time() * 1000)}"
     pedido = urllib.request.Request(alvo, headers={
         "User-Agent": "TORVIS-Atualizador/2.0",
         "Cache-Control": "no-cache, no-store", "Pragma": "no-cache"})
     with urllib.request.urlopen(pedido, timeout=TIMEOUT) as resposta:
-        return json.loads(resposta.read().decode("utf-8"))
+        dados = json.loads(resposta.read().decode("utf-8"))
+    if not isinstance(dados, dict) or "version" not in dados:
+        raise ValueError("manifesto sem campo 'version'")
+    return dados
+
+
+def ler_manifesto(url: str = MANIFESTO) -> dict:
+    """Consulta uma fonte; se for o padrão, consulta todas e devolve a mais nova."""
+    if url != MANIFESTO:
+        return _ler_uma(url, cache_bust=url.lower().startswith("http"))
+
+    melhores, erros = [], []
+    for fonte in FONTES:
+        try:
+            melhores.append(_ler_uma(fonte))
+        except Exception as exc:                          # noqa: BLE001
+            erros.append(f"{fonte}: {exc}")
+    if not melhores:
+        raise RuntimeError("nenhuma fonte respondeu (" + "; ".join(erros) + ")")
+    melhores.sort(key=lambda d: _tupla(d.get("version")), reverse=True)
+    return melhores[0]
 
 
 def baixar(url: str, destino: Path, aviso=lambda _t: None) -> Path:
