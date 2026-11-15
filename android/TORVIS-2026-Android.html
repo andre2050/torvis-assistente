@@ -122,6 +122,29 @@
   .diag{font-size:12.5px; color:var(--dim); margin-top:12px; white-space:pre-wrap; max-height:150px; overflow:auto}
   .diag b{color:var(--txt)}
   .aviso{font-size:11.5px; color:var(--dim); margin-top:10px}
+
+  /* ferramentas */
+  .chips{display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto; padding:8px 12px; border-radius:11px; border:1px solid var(--line);
+    background:#101722; color:var(--txt); font-size:13px}
+  .chip:active{transform:scale(.97)}
+  .chip.on{border-color:var(--accent); color:var(--accent)}
+  dialog.grande{width:min(96vw,520px); max-height:86vh; overflow-y:auto}
+  .bloco{border-top:1px solid var(--line); padding-top:12px; margin-top:12px}
+  .bloco h3{margin:0 0 8px; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim)}
+  .campos{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .mini{padding:10px 12px; border-radius:11px; border:1px solid var(--line);
+    background:#0f1620; color:var(--txt); font-size:14px; flex:1 1 auto; min-width:0}
+  .mini:active{transform:scale(.98)}
+  .res{font-size:13.5px; color:var(--accent); margin-top:8px; min-height:16px; word-break:break-all}
+  input[type=range]{width:100%; accent-color:var(--accent)}
+  .tira{display:flex; gap:12px; font-size:12.5px; color:var(--dim); flex-wrap:wrap; margin-bottom:6px}
+  .tira b{color:var(--txt); font-weight:600}
+  .item{display:flex; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px}
+  .item span{flex:1; min-width:0}
+  .item small{color:var(--dim); font-size:11.5px; display:block}
+  .item button{background:none; border:none; color:var(--dim); font-size:16px; padding:4px 6px}
 </style>
 </head>
 <body>
@@ -140,6 +163,117 @@
 </div>
 
 <main class="chat" id="chat"></main>
+
+
+<div class="chips">
+  <button class="chip" id="chip-ferramentas">🧰 Ferramentas</button>
+  <button class="chip" id="chip-lanterna">🔆 Lanterna</button>
+  <button class="chip" id="chip-bateria">🔋 <span id="chip-bateria-txt">—</span></button>
+  <button class="chip" id="chip-pc">💻 PC</button>
+</div>
+
+<dialog id="ferramentas" class="grande">
+  <h2>Ferramentas</h2>
+  <p class="hint">O que o celular faz sozinho. Sem API, sem gastar cota.</p>
+  <div class="tira">
+    <span>bateria <b id="f-bateria">—</b></span>
+    <span>rede <b id="f-rede">—</b></span>
+    <span>volume <b id="f-volume">—</b></span>
+  </div>
+
+  <div class="bloco"><h3>Volume do aparelho</h3>
+    <input type="range" id="f-slider" min="0" max="100" value="50">
+    <div class="campos" style="margin-top:8px">
+      <button class="mini" data-vol="-10">−10</button>
+      <button class="mini" data-vol="10">+10</button>
+      <button class="mini" data-vol="0">Silenciar</button>
+    </div>
+  </div>
+
+  <div class="bloco"><h3>Lanterna</h3>
+    <button class="mini" id="f-lanterna" style="width:100%">Acender lanterna</button>
+  </div>
+
+  <div class="bloco"><h3>Lembrete com notificação</h3>
+    <div class="campos">
+      <input class="mini" id="f-lembrete" placeholder="do que devo lembrar?" style="flex:2 1 150px">
+      <select class="mini" id="f-minutos" style="flex:0 0 92px">
+        <option value="1">1 min</option><option value="5">5 min</option>
+        <option value="15" selected>15 min</option><option value="30">30 min</option>
+        <option value="60">1 hora</option><option value="180">3 horas</option>
+      </select>
+      <button class="mini" id="f-agendar">Agendar</button>
+    </div>
+    <div id="f-lembretes"></div>
+  </div>
+
+  <div class="bloco"><h3>Calculadora</h3>
+    <div class="campos">
+      <input class="mini" id="f-conta" placeholder="ex: 12*8 + (3/2)" style="flex:2 1 150px">
+      <button class="mini" id="f-calcular">=</button>
+    </div>
+    <div class="res" id="f-resultado"></div>
+  </div>
+
+  <div class="bloco"><h3>Conversor</h3>
+    <div class="campos">
+      <input class="mini" id="f-valor" type="number" value="1" style="flex:0 0 84px">
+      <select class="mini" id="f-conversao" style="flex:2 1 150px">
+        <option value="km-mi">km → milhas</option>
+        <option value="mi-km">milhas → km</option>
+        <option value="kg-lb">kg → libras</option>
+        <option value="lb-kg">libras → kg</option>
+        <option value="c-f">°C → °F</option>
+        <option value="f-c">°F → °C</option>
+        <option value="m-pe">metros → pés</option>
+        <option value="pe-m">pés → metros</option>
+      </select>
+      <button class="mini" id="f-converter">Converter</button>
+    </div>
+    <div class="res" id="f-conversao-res"></div>
+  </div>
+
+  <div class="bloco"><h3>Senha forte</h3>
+    <div class="campos">
+      <input class="mini" id="f-tamanho" type="number" value="16" min="8" max="64" style="flex:0 0 84px">
+      <button class="mini" id="f-senha">Gerar</button>
+      <button class="mini" id="f-copiar-senha">Copiar</button>
+    </div>
+    <div class="res" id="f-senha-res"></div>
+  </div>
+
+  <div class="bloco"><h3>Abrir</h3>
+    <div class="campos">
+      <input class="mini" id="f-busca" placeholder="termo ou site" style="flex:2 1 140px">
+      <button class="mini" id="f-youtube">YouTube</button>
+      <button class="mini" id="f-google">Google</button>
+      <button class="mini" id="f-whatsapp">WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="bloco"><h3>Notas rápidas</h3>
+    <div class="campos">
+      <input class="mini" id="f-nota" placeholder="anotar algo" style="flex:2 1 140px">
+      <button class="mini" id="f-add-nota">Salvar</button>
+    </div>
+    <div id="f-notas"></div>
+  </div>
+
+  <div class="bloco"><h3>Casa inteligente (Home Assistant)</h3>
+    <div class="campos">
+      <input class="mini" id="f-ha-url" placeholder="http://192.168.0.10:8123" style="flex:2 1 150px">
+      <input class="mini" id="f-ha-token" placeholder="token de acesso" type="password" style="flex:2 1 130px">
+    </div>
+    <div class="campos" style="margin-top:8px">
+      <input class="mini" id="f-ha-ent" placeholder="light.sala" style="flex:2 1 130px">
+      <button class="mini" id="f-ha-on">Ligar</button>
+      <button class="mini" id="f-ha-off">Desligar</button>
+    </div>
+    <div class="res" id="f-ha-res"></div>
+  </div>
+
+  <div class="btns"><button class="principal" id="f-fechar">Fechar</button></div>
+</dialog>
 
 <div class="composer">
   <button class="mic" id="mic" aria-label="Falar">🎙</button>
@@ -345,6 +479,19 @@ async function enviar() {
   const campo = $("texto");
   const texto = campo.value.trim();
   if (!texto || ocupado) return;
+
+  const local = comandoLocal(texto);          // resolve sem API: economiza cota
+  if (local) {
+    campo.value = "";
+    campo.style.height = "auto";
+    historico.push({ quem: "eu", texto });
+    pintar(texto, "eu");
+    historico.push({ quem: "dele", texto: local });
+    pintar(local, "dele");
+    salvarChat();
+    falar(local);
+    return;
+  }
   if (!cfg.chave) { $("painel").showModal(); return; }
 
   ocupado = true;
@@ -462,6 +609,382 @@ window.torvisAviso = (mensagem) => {
   defEstado("pronto", "");
   pintar(mensagem, "sys");
 };
+
+
+/* ═══ ferramentas do celular ═══════════════════════════════════════════════ */
+
+const notas = () => JSON.parse(localStorage.getItem("torvis.notas") || "[]");
+const guardarNotas = (lista) => localStorage.setItem("torvis.notas", JSON.stringify(lista.slice(-50)));
+const lembretes = () => JSON.parse(localStorage.getItem("torvis.lembretes") || "[]");
+const guardarLembretes = (lista) => localStorage.setItem("torvis.lembretes", JSON.stringify(lista.slice(-30)));
+const casaCfg = () => JSON.parse(localStorage.getItem("torvis.casa") || "{}");
+
+/* calculadora sem eval: analisador próprio, aceita + - * / % ( ) */
+function calcular(entrada) {
+  const s = String(entrada || "").replace(/,/g, ".").replace(/\s+/g, "");
+  if (!s) throw new Error("escreva uma conta");
+  if (!/^[0-9+\-*/%().]+$/.test(s)) throw new Error("só números e + - * / ( )");
+  let i = 0;
+  const olhar = () => s[i];
+
+  function fator() {
+    if (olhar() === "-") { i++; return -fator(); }
+    if (olhar() === "+") { i++; return fator(); }
+    if (olhar() === "(") {
+      i++;
+      const v = soma();
+      if (olhar() !== ")") throw new Error("falta fechar parêntese");
+      i++;
+      return v;
+    }
+    const inicio = i;
+    while (i < s.length && /[0-9.]/.test(s[i])) i++;
+    if (inicio === i) throw new Error("conta incompleta");
+    const n = parseFloat(s.slice(inicio, i));
+    if (!isFinite(n)) throw new Error("número inválido");
+    return n;
+  }
+  function produto() {
+    let v = fator();
+    while (olhar() === "*" || olhar() === "/" || olhar() === "%") {
+      const op = s[i++];
+      const d = fator();
+      if ((op === "/" || op === "%") && d === 0) throw new Error("divisão por zero");
+      v = op === "*" ? v * d : op === "/" ? v / d : v % d;
+    }
+    return v;
+  }
+  function soma() {
+    let v = produto();
+    while (olhar() === "+" || olhar() === "-") {
+      const op = s[i++];
+      const d = produto();
+      v = op === "+" ? v + d : v - d;
+    }
+    return v;
+  }
+  const r = soma();
+  if (i < s.length) throw new Error("sobrou caractere: " + s[i]);
+  return r;
+}
+
+function arredondar(n) {
+  if (!isFinite(n)) return "número inválido";
+  const inteiro = Math.round(n);
+  if (Math.abs(n - inteiro) < 1e-9) return String(inteiro);
+  return n.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function converter(valor, tipo) {
+  const v = Number(valor);
+  if (!isFinite(v)) throw new Error("número inválido");
+  const regras = {
+    "km-mi": [v * 0.621371, "milhas"], "mi-km": [v / 0.621371, "km"],
+    "kg-lb": [v * 2.20462, "libras"], "lb-kg": [v / 2.20462, "kg"],
+    "c-f": [v * 9 / 5 + 32, "°F"], "f-c": [(v - 32) * 5 / 9, "°C"],
+    "m-pe": [v * 3.28084, "pés"], "pe-m": [v / 3.28084, "metros"]
+  };
+  const regra = regras[tipo];
+  if (!regra) throw new Error("escolha uma conversão");
+  return arredondar(regra[0]) + " " + regra[1];
+}
+
+function gerarSenha(tamanho) {
+  const n = Math.max(8, Math.min(64, Number(tamanho) || 16));
+  const grupos = ["abcdefghijkmnopqrstuvwxyz", "ABCDEFGHJKLMNPQRSTUVWXYZ",
+                  "23456789", "!@#$%&*?-_=+"];
+  const sorteio = new Uint32Array(n);
+  (window.crypto || window.msCrypto).getRandomValues(sorteio);
+  let senha = "";
+  for (let i = 0; i < n; i++) {
+    const grupo = grupos[i < grupos.length ? i : sorteio[i] % grupos.length];
+    senha += grupo[sorteio[i] % grupo.length];
+  }
+  return senha.split("").sort(() => (sorteio[0] % 2 ? 1 : -1)).join("");
+}
+
+/* ponte: quem executa é o Android; no navegador vira aviso */
+function comAparelho(acao, alternativa) {
+  if (ponte && typeof ponte[acao] === "function") return true;
+  if (alternativa) alternativa();
+  else pintar("Essa função precisa do APK do TORVIS no Android.", "sys");
+  return false;
+}
+
+function lancarVolume(porcentagem) {
+  if (!comAparelho("definirVolume")) return;
+  const valor = Math.max(0, Math.min(100, Math.round(porcentagem)));
+  ponte.definirVolume(valor);
+  $("f-slider").value = valor;
+  $("f-volume").textContent = valor + "%";
+}
+
+function alternarLanterna(forcar) {
+  if (!comAparelho("lanterna")) return null;
+  const ligar = typeof forcar === "boolean" ? forcar : !(ponte.lanternaAcesa && ponte.lanternaAcesa());
+  ponte.lanterna(ligar);
+  const chip = $("chip-lanterna");
+  chip.classList.toggle("on", ligar);
+  $("f-lanterna").textContent = ligar ? "Apagar lanterna" : "Acender lanterna";
+  return ligar;
+}
+
+function agendarLembrete(texto, minutos) {
+  const limpo = String(texto || "").trim();
+  if (!limpo) { $("f-lembrete").focus(); return "escreva do que devo lembrar"; }
+  const lista = lembretes();
+  const quando = Date.now() + Number(minutos) * 60000;
+  lista.push({ texto: limpo, quando });
+  guardarLembretes(lista);
+  desenharLembretes();
+  if (ponte && ponte.lembrar) {
+    const r = ponte.lembrar("TORVIS lembra", limpo, Number(minutos));
+    return r === "ok" ? "Lembro em " + minutos + " min: " + limpo : r;
+  }
+  return "Agendado aqui na lista (a notificação só toca no APK): " + limpo;
+}
+
+function desenharLembretes() {
+  const alvo = $("f-lembretes");
+  const lista = lembretes().filter((l) => l.quando > Date.now() - 3600000);
+  alvo.innerHTML = "";
+  if (!lista.length) return;
+  lista.slice(-6).reverse().forEach((l) => {
+    const linha = document.createElement("div");
+    linha.className = "item";
+    const quando = new Date(l.quando);
+    linha.innerHTML = '<span>' + l.texto.replace(/</g, "&lt;") + '<small>' +
+      quando.toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) +
+      '</small></span>';
+    const apagar = document.createElement("button");
+    apagar.textContent = "×";
+    apagar.onclick = () => {
+      guardarLembretes(lembretes().filter((x) => x.quando !== l.quando));
+      desenharLembretes();
+    };
+    linha.appendChild(apagar);
+    alvo.appendChild(linha);
+  });
+}
+
+function desenharNotas() {
+  const alvo = $("f-notas");
+  const lista = notas();
+  alvo.innerHTML = "";
+  if (!lista.length) return;
+  lista.slice(-8).reverse().forEach((n) => {
+    const linha = document.createElement("div");
+    linha.className = "item";
+    linha.innerHTML = '<span>' + n.texto.replace(/</g, "&lt;") + '<small>' + n.quando + '</small></span>';
+    const apagar = document.createElement("button");
+    apagar.textContent = "×";
+    apagar.onclick = () => {
+      guardarNotas(notas().filter((x) => x.quando !== n.quando));
+      desenharNotas();
+    };
+    linha.appendChild(apagar);
+    alvo.appendChild(linha);
+  });
+}
+
+function criarNota(texto) {
+  const limpo = String(texto || "").trim();
+  if (!limpo) return null;
+  const lista = notas();
+  lista.push({ texto: limpo, quando: new Date().toLocaleString("pt-BR") });
+  guardarNotas(lista);
+  desenharNotas();
+  return limpo;
+}
+
+async function casaInteligente(acao) {
+  const cfgCasa = casaCfg();
+  const url = ($("f-ha-url").value || cfgCasa.url || "").trim().replace(/\/$/, "");
+  const token = ($("f-ha-token").value || cfgCasa.token || "").trim();
+  const entidade = ($("f-ha-ent").value || cfgCasa.entidade || "").trim();
+  const saida = $("f-ha-res");
+  if (!url || !token || !entidade) { saida.textContent = "preencha endereço, token e entidade"; return; }
+  localStorage.setItem("torvis.casa", JSON.stringify({ url, token, entidade }));
+  try {
+    saida.textContent = "falando com a casa...";
+    const resposta = await fetch(url + "/api/services/light/" + acao, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ entity_id: entidade })
+    });
+    saida.textContent = resposta.ok
+      ? (acao === "turn_on" ? "liguei " : "desliguei ") + entidade
+      : "a casa recusou (" + resposta.status + "). Confira o token.";
+  } catch (e) {
+    saida.textContent = "não alcancei " + url + " (mesma rede? CORS liberado no Home Assistant?)";
+  }
+}
+
+function atualizarEstadoAparelho() {
+  if (!ponte) return;
+  try {
+    const b = ponte.bateria ? ponte.bateria() : -1;
+    const carregando = ponte.carregando ? ponte.carregando() : false;
+    const texto = b >= 0 ? b + "%" + (carregando ? " ⚡" : "") : "—";
+    $("chip-bateria-txt").textContent = texto;
+    $("f-bateria").textContent = texto;
+    $("f-rede").textContent = ponte.rede ? ponte.rede() : "—";
+    const v = ponte.volume ? ponte.volume() : -1;
+    if (v >= 0) { $("f-volume").textContent = v + "%"; $("f-slider").value = v; }
+  } catch (e) { /* estado é enfeite */ }
+}
+
+/* ═══ comandos que o celular resolve sozinho, sem gastar cota ═════════════ */
+function comandoLocal(texto) {
+  const t = String(texto || "").toLowerCase().trim();
+  let m;
+
+  if (/^(acender|ligar)\s+(a\s+)?(lanterna|luz)/.test(t) || t === "/lanterna") {
+    const estadoLuz = alternarLanterna(true);
+    return estadoLuz === null ? null : "Lanterna acesa.";
+  }
+  if (/^(apagar|desligar)\s+(a\s+)?(lanterna|luz)/.test(t)) {
+    const estadoLuz = alternarLanterna(false);
+    return estadoLuz === null ? null : "Lanterna apagada.";
+  }
+  if ((m = t.match(/^volume\s+(\d{1,3})%?$/))) {
+    if (!ponte) return null;
+    lancarVolume(Number(m[1]));
+    return "Volume em " + Math.min(100, Number(m[1])) + "%.";
+  }
+  if (/^(aumentar|subir)\s+(o\s+)?volume/.test(t)) {
+    if (!ponte) return null;
+    const atual = ponte.volume();
+    lancarVolume(atual + 15);
+    return "Volume em " + Math.min(100, atual + 15) + "%.";
+  }
+  if (/^(diminuir|baixar)\s+(o\s+)?volume/.test(t)) {
+    if (!ponte) return null;
+    const atual = ponte.volume();
+    lancarVolume(atual - 15);
+    return "Volume em " + Math.max(0, atual - 15) + "%.";
+  }
+  if ((m = t.match(/^(?:lembrar(?:-me)?(?: de)?|lembrete:?)\s+(.+?)\s+(?:em|daqui a)\s+(\d+)\s*(min|minutos?|h|horas?)$/))) {
+    const minutos = /^h/.test(m[3]) ? Number(m[2]) * 60 : Number(m[2]);
+    const aviso = agendarLembrete(m[1], minutos);
+    return aviso + (ponte ? "" : " (agenda local)");
+  }
+  if ((m = t.match(/^abrir\s+(youtube|you tube)\s+(.+)$/))) {
+    if (ponte && ponte.youtube) { ponte.youtube(m[2]); return "Abrindo o YouTube: " + m[2]; }
+    window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(m[2]), "_blank");
+    return "Abrindo o YouTube: " + m[2];
+  }
+  if ((m = t.match(/^(?:abrir|ir para|entrar em)\s+(site\s+|o site\s+)?([a-z0-9.\-]+\.[a-z]{2,}.*)$/))) {
+    const alvo = /^https?:/.test(m[2]) ? m[2] : "https://" + m[2];
+    if (ponte && ponte.abrir) { ponte.abrir(alvo); return "Abrindo " + alvo; }
+    window.open(alvo, "_blank");
+    return "Abrindo " + alvo;
+  }
+  if (/^(minha\s+)?bateria|quanta bateria/.test(t)) {
+    if (!ponte) return null;
+    const b = ponte.bateria();
+    const carregando = ponte.carregando();
+    return "Bateria em " + b + "%" + (carregando ? ", carregando." : ".") + " Rede: " + ponte.rede() + ".";
+  }
+  if ((m = t.match(/^(?:calcular|quanto (?:é|e)|conta)\s+(.+)$/))) {
+    try { return m[1] + " = " + arredondar(calcular(m[1])); }
+    catch (e) { return "Não consegui calcular: " + e.message; }
+  }
+  if ((m = t.match(/^(?:anotar|anota|nova nota:?)\s+(.+)$/))) {
+    const n = criarNota(m[1]);
+    return n ? "Anotado: " + n : "Não entendi o que anotar.";
+  }
+  if (/^(minhas\s+)?notas$/.test(t)) {
+    const lista = notas();
+    if (!lista.length) return "Nenhuma nota salva.";
+    return lista.slice(-5).reverse().map((n, i) => (i + 1) + ". " + n.texto).join("\n");
+  }
+  if ((m = t.match(/^senha(?: de)?\s*(\d{2})?$/))) {
+    return "Senha: " + gerarSenha(m[1] || 16);
+  }
+  return null;
+}
+
+/* ═══ ligações das ferramentas ═════════════════════════════════════════════ */
+$("chip-ferramentas").addEventListener("click", () => {
+  atualizarEstadoAparelho();
+  desenharLembretes();
+  desenharNotas();
+  const casa = casaCfg();
+  if (casa.url) $("f-ha-url").value = casa.url;
+  if (casa.entidade) $("f-ha-ent").value = casa.entidade;
+  $("ferramentas").showModal();
+});
+$("f-fechar").addEventListener("click", () => $("ferramentas").close());
+$("chip-lanterna").addEventListener("click", () => alternarLanterna());
+$("f-lanterna").addEventListener("click", () => alternarLanterna());
+$("chip-bateria").addEventListener("click", () => {
+  $("chip-ferramentas").click();
+});
+$("chip-pc").addEventListener("click", () => {
+  pintar("O PC não está pareado ainda. Essa ponte vem na próxima etapa; "
+    + "o celular controla o próprio aparelho por enquanto.", "sys");
+});
+document.querySelectorAll("[data-vol]").forEach((botao) => {
+  botao.addEventListener("click", () => {
+    if (!ponte) { pintar("Volume só no APK.", "sys"); return; }
+    const passo = Number(botao.dataset.vol);
+    lancarVolume(passo === 0 ? 0 : ponte.volume() + passo);
+  });
+});
+$("f-slider").addEventListener("input", (ev) => {
+  if (ponte) ponte.definirVolume(Number(ev.target.value));
+  $("f-volume").textContent = ev.target.value + "%";
+});
+$("f-agendar").addEventListener("click", () => {
+  const aviso = agendarLembrete($("f-lembrete").value, $("f-minutos").value);
+  pintar(aviso, "sys");
+  if (String(aviso).indexOf("Lembro") === 0) $("f-lembrete").value = "";
+});
+$("f-calcular").addEventListener("click", () => {
+  try { $("f-resultado").textContent = $("f-conta").value + " = " + arredondar(calcular($("f-conta").value)); }
+  catch (e) { $("f-resultado").textContent = e.message; }
+});
+$("f-converter").addEventListener("click", () => {
+  try { $("f-conversao-res").textContent = arredondar(Number($("f-valor").value)) + " → " + converter($("f-valor").value, $("f-conversao").value); }
+  catch (e) { $("f-conversao-res").textContent = e.message; }
+});
+$("f-senha").addEventListener("click", () => {
+  const senha = gerarSenha($("f-tamanho").value);
+  $("f-senha-res").textContent = senha;
+  $("f-senha-res").dataset.senha = senha;
+});
+$("f-copiar-senha").addEventListener("click", () => {
+  const senha = $("f-senha-res").dataset.senha || $("f-senha-res").textContent;
+  if (!senha) return;
+  if (ponte && ponte.copiar) ponte.copiar(senha);
+  else if (navigator.clipboard) navigator.clipboard.writeText(senha);
+  pintar("Senha copiada.", "sys");
+});
+$("f-youtube").addEventListener("click", () => {
+  const termo = $("f-busca").value.trim();
+  if (ponte && ponte.youtube) ponte.youtube(termo);
+  else window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(termo), "_blank");
+});
+$("f-google").addEventListener("click", () => {
+  const termo = $("f-busca").value.trim();
+  const url = "https://www.google.com/search?q=" + encodeURIComponent(termo);
+  if (ponte && ponte.abrir) ponte.abrir(url); else window.open(url, "_blank");
+});
+$("f-whatsapp").addEventListener("click", () => {
+  const termo = $("f-busca").value.trim();
+  const url = "whatsapp://send?text=" + encodeURIComponent(termo);
+  if (ponte && ponte.abrir) ponte.abrir(url); else window.open("https://wa.me/?text=" + encodeURIComponent(termo), "_blank");
+});
+$("f-add-nota").addEventListener("click", () => {
+  const criada = criarNota($("f-nota").value);
+  if (criada) { $("f-nota").value = ""; pintar("Anotado: " + criada, "sys"); }
+});
+$("f-ha-on").addEventListener("click", () => casaInteligente("turn_on"));
+$("f-ha-off").addEventListener("click", () => casaInteligente("turn_off"));
+
+/* o resumo do aparelho se atualiza sozinho */
+setInterval(atualizarEstadoAparelho, 20000);
 
 /* ligações */
 $("enviar").addEventListener("click", enviar);
