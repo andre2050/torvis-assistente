@@ -219,7 +219,11 @@ def atualizar(destino: Path, pacote: Path | None = None, manifesto_url: str = MA
             print(f"O arquivo não é um zip válido ({exc}).")
             print("Nada foi alterado no seu TORVIS. Baixe o pacote de novo.")
             return 3
-        raiz = _pasta_raiz_extraida(extracao)
+        try:
+            raiz = _pasta_raiz_extraida(extracao)
+        except RuntimeError as exc:
+            print(f"{exc}\nEsse zip não é um pacote do TORVIS. Nada foi alterado.")
+            return 3
         nova_versao = _versao_instalada(raiz)
 
         print("Copiando arquivos...")

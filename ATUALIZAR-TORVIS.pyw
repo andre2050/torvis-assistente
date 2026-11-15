@@ -240,17 +240,29 @@ def atualizar(app: Path, pacote: Path | None = None, aviso=lambda _t: None,
                              "Feche o TORVIS e clique em Atualizar de novo.")
         return relato
 
-    aviso("Consultando a versão publicada...")
-    try:
-        dados = ler_manifesto(manifesto_url)
-    except Exception as exc:                              # noqa: BLE001
-        relato["mensagem"] = (f"Não consegui consultar o GitHub: {exc}\n"
-                              "Antivírus, proxy ou falta de internet podem bloquear.")
-        return relato
+    local = pacote is not None
+    dados: dict = {}
+    if local:
+        # Pacote escolhido à mão: a rede deixa de ser obrigatória. Serve para
+        # quando antivírus, proxy ou o próprio Windows barram o download.
+        try:
+            dados = ler_manifesto(manifesto_url)
+        except Exception as exc:                          # noqa: BLE001
+            aviso(f"Sem consulta ao GitHub ({exc}). Instalando do arquivo escolhido.")
+    else:
+        aviso("Consultando a versão publicada...")
+        try:
+            dados = ler_manifesto(manifesto_url)
+        except Exception as exc:                          # noqa: BLE001
+            relato["mensagem"] = (f"Não consegui consultar o GitHub: {exc}\n\n"
+                                  "Antivírus, proxy ou falta de internet podem bloquear.\n"
+                                  "Alternativa: baixe o pacote no navegador e use\n"
+                                  "\"Instalar pacote baixado (.zip)\".")
+            return relato
 
     remota = str(dados.get("version") or "").strip()
-    relato["para"] = remota
-    if remota and remota == relato["de"]:
+    relato["para"] = remota or None
+    if remota and not local and remota == relato["de"]:
         relato.update(ok=True, mensagem=f"Já está na versão {relato['de']}. Nada a fazer.")
         return relato
 
@@ -264,7 +276,7 @@ def atualizar(app: Path, pacote: Path | None = None, aviso=lambda _t: None,
             aviso("Baixando o pacote...")
             pacote = baixar(url, temporaria / "pacote.zip", aviso)
 
-        esperado = str(dados.get("sha256") or "").strip().lower()
+        esperado = "" if local else str(dados.get("sha256") or "").strip().lower()
         if esperado and sha256(pacote) != esperado:
             relato["mensagem"] = ("O pacote baixado não confere com o SHA-256 publicado.\n"
                                   "Nada foi alterado. Tente de novo; se repetir, o antivírus "
@@ -283,8 +295,21 @@ def atualizar(app: Path, pacote: Path | None = None, aviso=lambda _t: None,
             relato["mensagem"] = f"O arquivo não é um zip válido ({exc}). Nada foi alterado."
             return relato
 
-        origem = raiz_extraida(extracao)
-        aviso("Copiando arquivos...")
+        try:
+            origem = raiz_extraida(extracao)
+        except RuntimeError as exc:
+            relato["mensagem"] = (f"{exc}\n\n"
+                                  "O arquivo escolhido não é um pacote do TORVIS.\n"
+                                  "Baixe o pacote oficial na página de releases do GitHub\n"
+                                  "e escolha o .zip de novo. Nada foi alterado.")
+            return relato
+        versao_pacote = versao_instalada(origem)
+        relato["para"] = versao_pacote
+        if versao_pacote == relato["de"]:
+            relato.update(ok=True, mensagem=f"Esse pacote já é a versão {relato['de']}. "
+                                            "Nada foi alterado.")
+            return relato
+        aviso(f"Pacote {versao_pacote}. Copiando arquivos...")
         copiados, falhas, preservados = copiar(origem, app)
         relato.update(copiados=len(copiados), falhas=falhas, preservados=len(preservados))
 
@@ -293,7 +318,7 @@ def atualizar(app: Path, pacote: Path | None = None, aviso=lambda _t: None,
             registro.mkdir(parents=True, exist_ok=True)
             with (registro / "atualizacao-janela.log").open("a", encoding="utf-8") as log:
                 log.write(f"\n=== {time.strftime('%d/%m/%Y %H:%M')} ===\n")
-                log.write(f"{relato['de']} -> {remota} | copiados {len(copiados)} | "
+                log.write(f"{relato['de']} -> {versao_pacote} | copiados {len(copiados)} | "
                           f"falhas {len(falhas)}\n")
                 for nome, motivo in falhas:
                     log.write(f"FALHA {nome}: {motivo}\n")
@@ -396,16 +421,10 @@ def janela() -> int:
         else:
             escrever(texto)
 
-    def tarefa():
-        try:
-            relato = atualizar(estado["app"], aviso=aviso)
-        except Exception as exc:                          # noqa: BLE001
-            relato = {"ok": False, "mensagem": f"Erro inesperado: {exc}"}
-        raiz.after(0, lambda: terminar(relato))
-
     def terminar(relato: dict) -> None:
         estado["rodando"] = False
         botao.configure(state="normal", text="Atualizar agora")
+        botao_zip.configure(state="normal")
         barra["value"] = 100 if relato.get("ok") else 0
         escrever(relato.get("mensagem", ""))
         pintar_estado()
@@ -417,24 +436,59 @@ def janela() -> int:
         else:
             messagebox.showwarning("Não deu para atualizar", relato.get("mensagem", ""))
 
-    def comecar():
-        if estado["rodando"]:
+    def copiar_detalhes():
+        try:
+            raiz.clipboard_clear()
+            raiz.clipboard_append(saida.get("1.0", "end").strip())
+            escrever("Detalhes copiados. Cole no chat para eu ver o que aconteceu.")
+        except Exception as exc:                          # noqa: BLE001
+            escrever(f"Não consegui copiar: {exc}")
+
+    def comecar_de_arquivo():
+        arquivo = filedialog.askopenfilename(
+            title="Pacote do TORVIS já baixado",
+            filetypes=[("Pacote do TORVIS", "*.zip"), ("Todos os arquivos", "*.*")])
+        if not arquivo:
             return
         if not estado["app"]:
             messagebox.showinfo("Cadê o TORVIS?",
                                 "Não achei a pasta do TORVIS.\nUse \"Escolher pasta\".")
             return
+        iniciar(Path(arquivo))
+
+    def iniciar(pacote=None):
+        if estado["rodando"]:
+            return
         estado["rodando"] = True
         botao.configure(state="disabled", text="Atualizando...")
+        botao_zip.configure(state="disabled")
         barra["value"] = 0
         escrever("Começando...")
-        threading.Thread(target=tarefa, daemon=True).start()
+
+        def corpo():
+            try:
+                relato = atualizar(estado["app"], pacote=pacote, aviso=aviso)
+            except Exception as exc:                      # noqa: BLE001
+                relato = {"ok": False, "mensagem": f"Erro inesperado: {exc}"}
+            raiz.after(0, lambda: terminar(relato))
+
+        threading.Thread(target=corpo, daemon=True).start()
+
+    def comecar():
+        if not estado["app"]:
+            messagebox.showinfo("Cadê o TORVIS?",
+                                "Não achei a pasta do TORVIS.\nUse \"Escolher pasta\".")
+            return
+        iniciar(None)
 
     botoes = ttk.Frame(moldura)
     botoes.pack(fill="x", pady=(12, 0))
     botao = ttk.Button(botoes, text="Atualizar agora", command=comecar)
     botao.pack(side="left")
-    ttk.Button(botoes, text="Escolher pasta", command=escolher).pack(side="left", padx=8)
+    botao_zip = ttk.Button(botoes, text="Instalar pacote baixado (.zip)",
+                           command=comecar_de_arquivo)
+    botao_zip.pack(side="left", padx=8)
+    ttk.Button(botoes, text="Copiar detalhes", command=copiar_detalhes).pack(side="left", padx=8)
     ttk.Button(botoes, text="Fechar", command=raiz.destroy).pack(side="right")
 
     pintar_estado()
@@ -447,7 +501,14 @@ if __name__ == "__main__":
     try:
         sys.exit(janela())
     except Exception as exc:                              # noqa: BLE001
-        # Sem janela (ou sem tkinter), pelo menos avisa no console.
+        # Sem tkinter/ambiente gráfico: avisa por caixa nativa, que existe no Windows.
         print(f"Não consegui abrir a janela: {exc}")
+        if os.name == "nt":
+            try:
+                import ctypes
+                ctypes.windll.user32.MessageBoxW(
+                    None, f"Não consegui abrir a janela: {exc}", "Atualizar o TORVIS", 0x30)
+            except Exception:                             # noqa: BLE001
+                pass
         print("Rode: py -3 tools\\atualizar_manual.py --diagnostico")
         sys.exit(1)

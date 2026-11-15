@@ -144,6 +144,56 @@ class AtualizacaoTests(Base):
             self.assertIn("6.6.0 -> 6.6.3", log)
 
 
+class SemRedeTests(Base):
+    """O caminho que salva quem tem antivírus/proxy barrando o download."""
+
+    SEM_REDE = "https://servidor-que-nao-existe.invalid/update.json"
+
+    def test_pacote_escolhido_a_mao_instala_sem_internet(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            app = self._app(base, "6.6.0")
+            pacote = self._pacote(base, "6.6.4")
+
+            relato = self.mod.atualizar(app, pacote=pacote, manifesto_url=self.SEM_REDE)
+
+            self.assertTrue(relato["ok"], relato["mensagem"])
+            self.assertEqual(self.mod.versao_instalada(app), "6.6.4")
+            self.assertEqual((app / "config.json").read_text(encoding="utf-8"),
+                             '{"minha":"chave"}')
+
+    def test_pacote_mais_velho_ou_igual_nao_altera_nada(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            app = self._app(base, "6.6.4")
+            pacote = self._pacote(base, "6.6.4")
+            relato = self.mod.atualizar(app, pacote=pacote, manifesto_url=self.SEM_REDE)
+            self.assertTrue(relato["ok"])
+            self.assertIn("já é a versão", relato["mensagem"])
+
+    def test_zip_que_nao_e_do_torvis_avisa_sem_estourar(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            app = self._app(base, "6.6.0")
+            estranho = base / "estranho.zip"
+            with zipfile.ZipFile(estranho, "w") as z:
+                z.writestr("leiame.txt", "oi")
+
+            relato = self.mod.atualizar(app, pacote=estranho, manifesto_url=self.SEM_REDE)
+
+            self.assertFalse(relato["ok"])
+            self.assertIn("não é um pacote do TORVIS", relato["mensagem"])
+            self.assertEqual(self.mod.versao_instalada(app), "6.6.0")
+
+    def test_sem_pacote_e_sem_rede_explica_a_alternativa(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            app = self._app(base, "6.6.0")
+            relato = self.mod.atualizar(app, manifesto_url=self.SEM_REDE)
+            self.assertFalse(relato["ok"])
+            self.assertIn("pacote baixado", relato["mensagem"].lower())
+
+
 class DescobertaTests(Base):
     def test_acha_a_pasta_do_app(self):
         with TemporaryDirectory() as tmp:
