@@ -1,6 +1,6 @@
 {
   "product": "T.O.R.V.I.S 2026",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "channel": "stable",
   "format": 1,
   "files": {
@@ -8,6 +8,7 @@
     "AGENTE-AUTONOMO-v5.4.0.md": "59394fefc34ef388e0420ab58373dfcf5e89e8aea090360a14a634169b03af9a",
     "AGENTS.md": "aa39de42142937668d6239a1236c6b5732ee10ef19a287174eb2c955ee2f921a",
     "APLICAR-ATUALIZACAO.bat": "ab872ba661ccef29e322248ee3780c6a4232046f911a9cb31a18ab32e75dbde2",
+    "ATUALIZACAO-v6.5.0.md": "1f589d5db3f16eafbc4b9646008f7b00e203d4ca252d0368b61541857d6f87e6",
     "ATUALIZADOR-GITHUB-v5.6.1.md": "b5e55ded91df846845457c4f549c49e410a36990f22c3c230ba99268f112af13",
     "COMO-INICIAR-NO-WINDOWS.md": "163f13512667eb2d838cca3e1ed9a3faf9d43c6097f82e80505894fc516d09f6",
     "CRIAR-EXECUTAVEL.bat": "ab49577ccfe4b974021391af903bbff87a846039f219b7d43b0229992888b5b8",
@@ -97,7 +98,7 @@
     "core/appidentity.py": "445b8fb04ac986d088d49f05eff0f15189cbc13b362e5c56fb699eff70a105b0",
     "core/audio_devices.py": "e3c6cef1fcc0ee1065d295718e4ddeec90cdfa0b616103dba942144a63db7878",
     "core/autonomous_agent.py": "effe7e20735849e58525f5aac1ba6a3f95b235e3cd84f6eac206818bad56e8a3",
-    "core/autoupdate.py": "559b995114bb645c6b8a02836a51135c886123498743a81573d125e70d69645d",
+    "core/autoupdate.py": "dd37dbdf9f83422ac9340c5400b954d7a54a12aefebe81624a0a94c66c20667e",
     "core/avatar.py": "463d30b6628dfb692a02666fc1bfd354b8f29da9f5cf64d9bbac25080a53ae22",
     "core/avatar_mesh.py": "e98856f62b7bc972f7744f1ebbcd75cbab8c9d0fd05d003004b7c2b72eeacd03",
     "core/budget.py": "673cd631e68b63cb867cbd85f8a92ff8c15d43689c24c84039472bf37def4c77",
@@ -151,7 +152,7 @@
     "core/tts.py": "33ca5d02111c6e523c9c3af9485c4ae6a254de7a6a374b9095c2500186283546",
     "core/undo.py": "b52a0a112d9a375bce41bac8f347a7bf3f16bdded984bdf7589b13e3ef81fe84",
     "core/update_manager.py": "f711146c73aacda5970088cbd2273c00426b21927451a08edb63129eef25cd11",
-    "core/version.py": "3b07b8397a65fad3ae0f27aa2111f35dedf7d5d853ba51f2a124ee99fb20a02b",
+    "core/version.py": "9e5f7c65a42552bb5071e57b14704eb9ea051561aefaf24b18fe71fc4189cb1f",
     "core/viseme.py": "80ca3bc752a230e39542adfa575b07e1e998aa0e43492fc9488b3ed22574f0d9",
     "core/wake_word.py": "67365e05aa210f063deaafdf63d6cbbdd8beb1ce7576ec52c47778111e2cce9c",
     "dashboard/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -160,9 +161,6 @@
     "dashboard/static/crypto-js.min.js": "769a555de553babc35a3338f344dd7aa16260c93cea2c7db290707c90484e7cc",
     "dashboard/static/login.html": "693aca5ff7c89a4bd9bba0b91785ad590cf5909b3c32b15a315c19c1a86569a5",
     "diagnostico_windows.py": "e1122836ef5d395ff5e34f89a00bcaf5e77e41b237878aa773725f605949b8e5",
-    "docs/relatorio-tecnico.html": "4609422a27ef20fc74b387c0f883c4a8e64ddfc6bff39bac7628439d5ef97944",
-    "docs/relatorio-tecnico.md": "a5b952a5bf18251a06fba13fb7768c795694692819ea0214adb4c6f4315e564a",
-    "docs/roteiro-defesa.md": "3097119d7785470bc73bef5f5f639ac9771d98d805cbead6a00b7762843d12b1",
     "gui/__init__.py": "98498474107743aba86e7b37669201c00249138ad11d0e205339ab1ec1d88555",
     "gui/expressive.py": "8ce7743ff0f76dc7651acf1a01f06959da984b78baf59f7fa7596329feef3340",
     "gui/finetuning_panel.py": "c53eb341002b8fa6425e3c84709a740275002682a542eedc3507010d4c730f30",
@@ -176,7 +174,7 @@
     "gui/style.py": "a1c7c9ad05e06a53fa4e51564c01cf79d6a298747de5340d1d80decd593a5633",
     "gui/theme.py": "5b21793874c75e09572da275beb6ba39039757270e84d7ea04266f1da2a61efa",
     "gui/widgets.py": "08fab40bac62f222d8ab3293abb4f35572cb94bf8f75c8f4581f75b654170107",
-    "gui/window.py": "6975e0469404fc257277463d08e729f52946b78b9b18a06bd49a18f504e4f8ad",
+    "gui/window.py": "e5def2c53c54c394225dea06ce41b48cb1e5be014b965a5badc3cc3a5e8f027b",
     "iniciar_auto.py": "7df8cd096ebbcef0344cfe499dd4bd472537a4ba9b9cc90bac62adaed9b3982c",
     "main.py": "4f23430f5be735b79609c2d6015829cefd301805e524166ada074261ce69f50f",
     "memory/__init__.py": "1a53be42e3bb5daa658eac29b1df3568bbdd3f294d4a495f9f09c0e9d0e361c8",
@@ -212,6 +210,7 @@
     "tests/smoke.py": "ee2043c339887f8adbc9adfaf6d18d4feab76493eb87fa17e5b8f30484358ed3",
     "tests/test_adaptive_550.py": "8fa41631fdc65d3c4e8f828dca0ba8fea50bf64d4b13853d2ec215b2b261d046",
     "tests/test_aplicar_v6_2.py": "6008022f41a49906cb32550b1e055c31df8c8e2346db32f79decda6fb3d321d4",
+    "tests/test_atualizacao_um_clique_v6_5.py": "ff1bcf530b8de1792e3f41805c1a3a412b556cde5539298810f19812671ae399",
     "tests/test_autonomous_540.py": "0286baeb778cc5aa5e1726ae8e48a424f3c9848ec91dbe08dd1aaf01002febef",
     "tests/test_autoupdate_v6_3.py": "e7c0177319f78de55553924f980cbff61e3dca84557f558e3c942c7bfee70d5c",
     "tests/test_colisao_v6_2_1.py": "99181bfdeca1166657832846b7f66a1f1ac073d4f4392f82662ef7c6b82b9377",
@@ -239,10 +238,11 @@
     "tests/test_vision_520.py": "ad74c05e2074d6ae2d3c0ea411dd4fc53238fc65ade9e50b644f25c01558836b",
     "tools/aplicar_atualizacao.py": "a83cc32848e65bfc2c5f230c07af3672c032ae015582da16a50d0e036eb02795",
     "tools/gerar_pacote.py": "6713b54202bc5a52b85fed29113d8930c1d462eeac1c57fdef80647c42d8bc12",
+    "tools/reabrir_apos_sair.py": "ef50be243a761d9bfa333271c0a3f05e86c12301a7e7f978b339a9475947e072",
     "tools/render_hub_grande.py": "013bc7a7ef45649ab6c574918f907913d45faabfefb814230ecac08f1e78913c",
     "tools/render_hubs.py": "c9db6ac0daa804624ff00eb9fb3a041434c36e9ba214b48a40daaaa8fa0d804f",
     "ui.py": "30fbf9428f211a164c81287014cb436cc714866c494ee1e7c76d7c3836eaf6a4",
     "update.example.json": "772524a4c007b10a65a070d301b4d24a0c9ef427d8d7e7f6559970fc3df66521",
-    "update.json": "1b3d8cfd64eb92929eedbc75ef10eb2328fb66d953c720d0f6d714fd7f9deb2c"
+    "update.json": "80c085241cdf8399ff2147dd21d6b32184839e0e50ad3501d6a9f07ec4451ce5"
   }
 }

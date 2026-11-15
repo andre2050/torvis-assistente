@@ -3458,6 +3458,43 @@ class MainWindow(QMainWindow):
         self._overlay = ov
 
 
+    def _aplicar_atualizacao_agora(self):
+        """Fecha o app e deixa a reabertura aplicar o pacote, sem console.
+
+        Quem aplica é a abertura seguinte (core.autoupdate.aplicar_na_abertura):
+        um caminho de aplicação só, com rollback, e nenhum arquivo trocado com o
+        app aberto. Se a reabertura não puder ser agendada, cai no aplicador
+        manual em vez de deixar a atualização esquecida no disco.
+        """
+        def avisar(texto: str) -> None:
+            if hasattr(self, "_content_sig"):
+                self._content_sig.emit("ATUALIZAR SISTEMA", texto)
+            elif hasattr(self, "_log_sig"):
+                self._log_sig.emit(texto)
+            else:
+                print(texto)
+
+        try:
+            from core import autoupdate
+            agendado = autoupdate.agendar_reabertura()
+        except Exception as exc:
+            self._log.append_log(
+                f"WRN: não consegui agendar a reabertura ({type(exc).__name__}: {exc}); "
+                "use APLICAR-ATUALIZACAO.bat depois de fechar o TORVIS.")
+            avisar("A atualização está preparada, mas a reabertura automática não "
+                   "pôde ser agendada. Ela será aplicada na próxima vez que você abrir "
+                   "o TORVIS — ou use APLICAR-ATUALIZACAO.bat.")
+            return
+
+        self._log.append_log(
+            f"SYS: atualização aplicada na reabertura (helper {agendado['pid']}, "
+            f"log {agendado['log']}); fechando agora.")
+        avisar("Fechando para aplicar a atualização.\n\n"
+               "O TORVIS reabre sozinho já na versão nova. "
+               "Seus dados, chave e memória não são alterados.")
+        # Meio segundo é suficiente para o texto aparecer antes da janela sumir.
+        QTimer.singleShot(900, QApplication.quit)
+
     def _oferecer_aplicar_atualizacao(self):
         """Depois de preparar o pacote, oferece aplicar — era o passo que faltava.
 
@@ -3532,22 +3569,24 @@ class MainWindow(QMainWindow):
                     return
 
                 notes = result.get("release_notes") or "Sem notas de versão."
+                nova = result.get("remote_version") or result.get("version") or "nova versão"
                 show(
                     f"Versão instalada: {VERSAO}\n"
-                    f"Nova versão: {result.get('remote_version')}\n\n"
+                    f"Nova versão: {nova}\n\n"
                     "✓ Download concluído\n"
                     "✓ SHA-256 validado\n"
                     "✓ Conteúdo interno validado\n"
                     "✓ Backup criado\n"
                     "✓ Atualização preparada\n\n"
-                    f"Backup: {result.get('backup_path')}\n"
-                    f"Pacote preparado: {result.get('staged_path')}\n\n"
-                    "A troca dos arquivos é feita pelo aplicador, fora da janela: "
-                    "o TORVIS fecha, aplica com backup e reabre.\n\n"
+                    f"Backup: {result.get('backup_path')}\n\n"
+                    "Aplicando agora: o TORVIS vai fechar e reabrir sozinho "
+                    "em alguns segundos.\n\n"
                     f"Notas da versão:\n{notes}"
                 )
-                # Pergunta na thread da interface (este worker é uma thread de trabalho).
-                QTimer.singleShot(0, self._oferecer_aplicar_atualizacao)
+                # Um clique basta: aplica e reabre sem perguntar de novo.
+                # O diálogo antigo ("aplicar agora?") só repetia a decisão que o
+                # clique já tinha tomado, e o .bat pedia mais uma tecla depois.
+                QTimer.singleShot(0, self._aplicar_atualizacao_agora)
             except Exception as exc:
                 show(
                     f"Versão instalada: {VERSAO}\n\n"

@@ -18,6 +18,9 @@ automática nunca pode ser motivo para não abrir.
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -150,3 +153,60 @@ def iniciar_vigia(ao_preparar=None, intervalo_horas: float | None = None) -> thr
     t = threading.Thread(target=vigiar, name="torvis-auto-update", daemon=True)
     t.start()
     return t
+
+
+# ─────────────────────────────────────────── atualização de um clique (v6.5.0)
+def python_sem_console() -> str:
+    """Caminho de um interpretador que não abre janela preta no Windows.
+
+    O pythonw.exe fica ao lado do python.exe. Se não existir, devolve o próprio
+    executável: melhor um console piscando do que nenhuma reabertura.
+    """
+    exe = Path(sys.executable)
+    if os.name == "nt":
+        candidato = exe.with_name("pythonw.exe")
+        if candidato.is_file():
+            return str(candidato)
+    return str(exe)
+
+
+def agendar_reabertura(pid: int | None = None, atraso_s: float = 1.0) -> dict:
+    """Lança, fora da janela, o processo que espera o TORVIS sair e o reabre.
+
+    O pacote já foi baixado, validado e preparado quando esta função é chamada.
+    Quem aplica é a abertura seguinte (``aplicar_na_abertura``): assim existe um
+    único caminho de aplicação, com rollback, e nenhum arquivo é trocado com o
+    app aberto.
+
+    Devolve ``{"pid": ..., "script": ..., "log": ...}``. Levanta exceção se o
+    interpretador ou o script não existirem — quem chama decide cair no caminho
+    manual.
+    """
+    base = Path(__file__).resolve().parent.parent
+    script = base / "tools" / "reabrir_apos_sair.py"
+    if not script.is_file():
+        raise FileNotFoundError(f"script de reabertura ausente: {script}")
+    alvo = int(pid if pid is not None else os.getpid())
+    log = STATE_DIR / "updates" / "reabertura.log"
+    try:
+        log.parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+
+    comando = [python_sem_console(), str(script),
+               "--pid", str(alvo), "--esperar-max", "120", "--log", str(log)]
+    bandeiras = 0
+    if os.name == "nt":
+        bandeiras = (getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                     | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+        if atraso_s > 0:
+            time.sleep(atraso_s)          # deixa o Qt fechar a janela antes
+    processo = subprocess.Popen(
+        comando, cwd=str(base),
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        creationflags=bandeiras,
+        start_new_session=(os.name != "nt"),
+        close_fds=True,
+    )
+    _log(f"reabertura agendada (pid {processo.pid} espera o {alvo}; log {log})")
+    return {"pid": processo.pid, "script": str(script), "log": str(log)}

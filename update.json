@@ -1,7 +1,7 @@
 {
-  "version": "6.4.0",
+  "version": "6.5.0",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.4.0/TORVIS-Assistente-v6.4.0.zip",
-  "sha256": "f4bd9245e74866194c387e18b3b90dff9a888a88260b0999c0188bf05f2729dd",
-  "release_notes": "Laboratorio: conjunto de ajuste fino a partir da memoria, com mascaramento de dados sensiveis, e relatorio tecnico do capstone com roteiro de defesa. Painel novo no drawer de configuracoes. 22 testes novos, 92 no total."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.5.0/TORVIS-Assistente-v6.5.0.zip",
+  "sha256": "6c771bb459684c4250b0096b3f07ba2c9a81ff5823353381e7a1822fa69e9586",
+  "release_notes": "Atualizacao de um clique: o botao ATUALIZAR SISTEMA agora busca, baixa, valida e instala sozinho, sem dialogo extra e sem console. O TORVIS fecha, aplica na reabertura (com rollback) e reabre sozinho."
 }
