@@ -76,7 +76,3 @@ Cobrem escada de modelos, orçamento diário, log de erros, rede/IPv4, relatóri
 Funciona e passa nos testes, mas **alguns caminhos só se validam em Windows real**:
 microfone, áudio/SAPI, visão de tela, Gemini Live e o executável empacotado. Rode
 `GERAR-RELATORIO.bat` no Windows e anexe o arquivo ao abrir uma issue.
-
-## Licença
-
-Veja `LICENSE`.
