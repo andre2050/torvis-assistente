@@ -1,7 +1,7 @@
 {
-  "version": "6.6.2",
+  "version": "6.6.3",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.2/TORVIS-Assistente-v6.6.2.zip",
-  "sha256": "6746b6f9a5810ca58be7afbb5658359a187ba99d1b089bcd61618b9de88af55f",
-  "release_notes": "Atualizador manual (tools/atualizar_manual.py): baixa, confere SHA-256 e instala com o app fechado, preservando config, memorias, notas e tarefas. Inclui modo diagnostico para achar o motivo da falha do botao."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.3/TORVIS-Assistente-v6.6.3.zip",
+  "sha256": "1f80a242be7ab96d7a8d6fe68548387a38b30409f0f8e5282d7d331673b73b34",
+  "release_notes": "ATUALIZAR-TORVIS.pyw: atualizacao por janela, dois cliques, sem terminal. Confere SHA-256, recusa pacote corrompido e preserva config, memorias, notas e tarefas. Botao do app agora aponta o caminho quando falha."
 }

@@ -3592,7 +3592,10 @@ class MainWindow(QMainWindow):
                     f"Versão instalada: {VERSAO}\n\n"
                     "A fonte oficial está configurada, mas a verificação não pôde ser concluída.\n\n"
                     f"Detalhe: {exc}\n\n"
-                    "Nenhum arquivo da instalação foi substituído."
+                    "Nenhum arquivo da instalação foi substituído.\n\n"
+                    "Se preferir um caminho fora do app: dê dois cliques em\n"
+                    "ATUALIZAR-TORVIS.pyw, na pasta do TORVIS."
+
                 )
 
         threading.Thread(target=worker, daemon=True, name="torvis-updater").start()

@@ -1,6 +1,6 @@
 {
   "product": "T.O.R.V.I.S 2026",
-  "version": "6.6.2",
+  "version": "6.6.3",
   "channel": "stable",
   "format": 1,
   "files": {
@@ -9,8 +9,10 @@
     "AGENTS.md": "aa39de42142937668d6239a1236c6b5732ee10ef19a287174eb2c955ee2f921a",
     "APLICAR-ATUALIZACAO.bat": "ab872ba661ccef29e322248ee3780c6a4232046f911a9cb31a18ab32e75dbde2",
     "ATUALIZACAO-MANUAL.md": "0dbee33847e3bebd5a898d3098719e4b501c37822ed85e48b1db394da60b2b0b",
+    "ATUALIZACAO-SEM-TERMINAL.md": "54aa7487260c5e975b75932a23275edbaab0f6467de8e7bf2ddc31ff8e46c959",
     "ATUALIZACAO-v6.5.0.md": "1f589d5db3f16eafbc4b9646008f7b00e203d4ca252d0368b61541857d6f87e6",
     "ATUALIZADOR-GITHUB-v5.6.1.md": "b5e55ded91df846845457c4f549c49e410a36990f22c3c230ba99268f112af13",
+    "ATUALIZAR-TORVIS.pyw": "82438cebcfc8937f71dd5e1a818164f08473928b68c7b5b6dd3cbb0cf35f58c1",
     "CAPACIDADES-v6.6.0.md": "7fb292042b4d33a56a7a8e9a5338e43b94f9f5ec6fc2fb1d11bab7514f030c6d",
     "COMO-INICIAR-NO-WINDOWS.md": "163f13512667eb2d838cca3e1ed9a3faf9d43c6097f82e80505894fc516d09f6",
     "CRIAR-EXECUTAVEL.bat": "ab49577ccfe4b974021391af903bbff87a846039f219b7d43b0229992888b5b8",
@@ -55,7 +57,7 @@
     "RELEASE-v6.2.0.md": "99c34b003562ea08347336e89ab7c69b05be2cbd3c6b014f08847fcc9095765e",
     "RELEASE-v6.3.0.md": "fdfac89b6696d0c9bb75f05b6af8cfba6a0a81f755e30501624eb88b7e208fb5",
     "TRILHA-TESTES-v6.6.1.md": "b0550a5ff92630c5ed7000d3d793e32f79f0a8be87efe104439418bb848a4c91",
-    "VERSAO.txt": "8ed5bf0c52d1de4d5a9ec57ccbda83e2cc927c0c1e0034182689834bdfdaf215",
+    "VERSAO.txt": "a2d69360e401db060a30ae54a177ec78a1d8430998dda8f81602597fef7d5cee",
     "VISAO-INTELIGENTE-v5.2.0.md": "030ef362cdf4030684aed52900804dc7c847a8baacbe41fcfc93d341dfdc6be2",
     "actions/adaptive_intelligence.py": "ddf8f2b2c276ca29b594f97d44aa1b97dd62c5f10643a6c2ebf5d08abfb81179",
     "actions/autonomous_planner.py": "f0bb7dd68398c24e00439fa37cdf4caac0ca494c71e3b3ce4888835234cb9e86",
@@ -166,7 +168,7 @@
     "core/undo.py": "b52a0a112d9a375bce41bac8f347a7bf3f16bdded984bdf7589b13e3ef81fe84",
     "core/update_manager.py": "87569ca54f6d11182b47d77f988216dc328eca043e8442a94c9f74bd5c005834",
     "core/userdata.py": "c962a75a643796de783f23c2528cb86b0a9907edc33d3509c6371630900122aa",
-    "core/version.py": "43daf546e7a7abb9c1afa66774cdc45dfbfc44a1f375cc57b81d673262d6f3a3",
+    "core/version.py": "2fcfd4f230129a094f647912c404bceb5ba0a697fea3b6cab3c4f1e9ca80b816",
     "core/viseme.py": "80ca3bc752a230e39542adfa575b07e1e998aa0e43492fc9488b3ed22574f0d9",
     "core/wake_word.py": "67365e05aa210f063deaafdf63d6cbbdd8beb1ce7576ec52c47778111e2cce9c",
     "dashboard/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -188,7 +190,7 @@
     "gui/style.py": "a1c7c9ad05e06a53fa4e51564c01cf79d6a298747de5340d1d80decd593a5633",
     "gui/theme.py": "5b21793874c75e09572da275beb6ba39039757270e84d7ea04266f1da2a61efa",
     "gui/widgets.py": "08fab40bac62f222d8ab3293abb4f35572cb94bf8f75c8f4581f75b654170107",
-    "gui/window.py": "e5def2c53c54c394225dea06ce41b48cb1e5be014b965a5badc3cc3a5e8f027b",
+    "gui/window.py": "c95c6c6b66bfd18fbf6bb8be0da2cf54c63b03b8a0fecac958bb571d108cee7a",
     "iniciar_auto.py": "7df8cd096ebbcef0344cfe499dd4bd472537a4ba9b9cc90bac62adaed9b3982c",
     "main.py": "4f23430f5be735b79609c2d6015829cefd301805e524166ada074261ce69f50f",
     "memory/__init__.py": "1a53be42e3bb5daa658eac29b1df3568bbdd3f294d4a495f9f09c0e9d0e361c8",
@@ -226,6 +228,7 @@
     "tests/test_aplicar_v6_2.py": "6008022f41a49906cb32550b1e055c31df8c8e2346db32f79decda6fb3d321d4",
     "tests/test_atualizacao_um_clique_v6_5.py": "231c3ad306bd83f08b4df6ac21498d1496d9c00ddfd0b870be19d27496c10490",
     "tests/test_atualizador_manual.py": "4f2df8762a45cfb30fba552dec28538fa8c32e91949559747579caf2efe515ce",
+    "tests/test_atualizar_janela.py": "ed162c11de0d23c4bcf4a561cdc3f4cdb5a8798cf7e1629b86b33c8c3800512a",
     "tests/test_autonomous_540.py": "0286baeb778cc5aa5e1726ae8e48a424f3c9848ec91dbe08dd1aaf01002febef",
     "tests/test_autoupdate_v6_3.py": "e7c0177319f78de55553924f980cbff61e3dca84557f558e3c942c7bfee70d5c",
     "tests/test_capacidades_v6_6.py": "fb5689f7e781854458cccd5d10e78155771e0ea2ab34924a2c2a74efa6d011c9",
@@ -261,6 +264,6 @@
     "tools/render_hubs.py": "c9db6ac0daa804624ff00eb9fb3a041434c36e9ba214b48a40daaaa8fa0d804f",
     "ui.py": "30fbf9428f211a164c81287014cb436cc714866c494ee1e7c76d7c3836eaf6a4",
     "update.example.json": "772524a4c007b10a65a070d301b4d24a0c9ef427d8d7e7f6559970fc3df66521",
-    "update.json": "b428e82886b53f37b9095924f456c08cee527958cf964170b0321340199ea111"
+    "update.json": "8122071b7ae88bd983e7ac9df147fc749cd850f0cadae60a58deac3fda8b4fba"
   }
 }
