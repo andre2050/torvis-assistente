@@ -1,0 +1,18 @@
+Assistente Inteligente v5.0.1 — Interfaces HUB
+
+HUBs disponíveis:
+- Rosto animado
+- Reator 3D
+- Reator
+- Hexágono
+- Prisma
+- Cubo
+- Íris
+- Engrenagem
+- Átomo
+- Mandala
+- Espectro
+- Vórtice
+
+A seleção fica em CONTROLES > HUB e é salva entre reinicializações.
+Os HUBs geométricos reagem ao áudio/estado do assistente.

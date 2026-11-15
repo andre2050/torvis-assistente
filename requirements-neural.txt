@@ -1,0 +1,5 @@
+# T.O.R.V.I.S 2026 — recursos neurais opcionais
+# A visão 5.2.0 usa NumPy/OpenCV já presentes no requirements.txt.
+# Instale Torch somente para os módulos experimentais de RNN/classificação da 5.1.x.
+opencv-python>=4.8,<5
+torch>=2.2,<3

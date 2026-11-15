@@ -1,0 +1,7 @@
+{
+  "version": "5.6.5",
+  "channel": "stable",
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v5.6.5/TORVIS-Assistente-v5.6.5-Cowork-Resiliente.zip",
+  "sha256": "COLOQUE_AQUI_O_SHA256_DE_64_CARACTERES",
+  "release_notes": "Refinamento da interface e Cowork Rápido."
+}

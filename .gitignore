@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Saídas de execução (não são código)
+*.log
+*.jsonl
+erros.old.log
+relatorio-torvis.txt
+relatorio_chave.txt
+model_ladder.json
+uso_ia.json
+
+# Build
+build/
+dist/
+*.spec
+*.exe
+
+# Configuração local (nunca versionar chave)
+.env
+config/local.json
