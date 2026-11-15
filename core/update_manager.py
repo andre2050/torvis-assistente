@@ -312,6 +312,15 @@ def verify_package(source: Path) -> dict:
     if extra:
         raise ValueError(f"unlisted update file: {extra[0]}")
     if missing:
+        # Diagnóstico melhor: se o nome existe com outra caixa, o problema não é
+        # arquivo faltando — é o pacote ter dois nomes que o Windows trata como um.
+        por_minusculo = {nome.lower(): nome for nome in actual_files}
+        for rel in missing:
+            gemeo = por_minusculo.get(rel.lower())
+            if gemeo and gemeo != rel:
+                raise ValueError(
+                    f"case-collision in package: '{rel}' and '{gemeo}' are the same file "
+                    "on Windows")
         raise ValueError(f"missing update file: {missing[0]}")
 
     for rel, expected in files.items():

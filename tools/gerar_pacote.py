@@ -47,6 +47,20 @@ def _arquivos(base: Path) -> list[Path]:
     return sorted(saida)
 
 
+def colisoes_de_caixa(arquivos: list[Path], raiz: Path) -> dict[str, list[str]]:
+    """Arquivos que só diferem em maiúscula/minúscula.
+
+    Existem no Linux, mas no Windows viram UM arquivo só: o pacote sai com dois
+    nomes no manifesto e um arquivo no disco, e a atualização é recusada com
+    "missing update file". Melhor falhar aqui, com o motivo à vista.
+    """
+    mapa: dict[str, list[str]] = {}
+    for arquivo in arquivos:
+        rel = arquivo.relative_to(raiz).as_posix()
+        mapa.setdefault(rel.lower(), []).append(rel)
+    return {chave: nomes for chave, nomes in mapa.items() if len(nomes) > 1}
+
+
 def versao() -> str:
     sys.path.insert(0, str(RAIZ))
     from core.version import VERSAO
@@ -68,6 +82,12 @@ def gerar(destino: Path | None = None) -> tuple[Path, str]:
     pasta.mkdir(parents=True)
 
     arquivos = _arquivos(RAIZ)
+    repetidos = colisoes_de_caixa(arquivos, RAIZ)
+    if repetidos:
+        detalhe = "; ".join(" / ".join(nomes) for nomes in repetidos.values())
+        raise SystemExit(
+            f"Pacote abortado: arquivos que diferem apenas em maiúscula/minúscula ({detalhe}).\n"
+            "No Windows eles colapsam em um só e a atualização seria recusada. Renomeie um deles.")
     hashes: dict[str, str] = {}
     for origem in arquivos:
         rel = origem.relative_to(RAIZ)

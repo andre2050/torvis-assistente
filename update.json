@@ -1,7 +1,7 @@
 {
-  "version": "6.2.0",
+  "version": "6.2.1",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.2.0/TORVIS-Assistente-v6.2.0.zip",
-  "sha256": "13ffbead6de51980f34ab542486322d6bbfdc6f9a1f5561ef77171f2e38e02d4",
-  "release_notes": "A atualizacao agora se conclui: aplica com rollback, sem sobrescrever chave e memoria, e o app oferece Aplicar e reabrir."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.2.1/TORVIS-Assistente-v6.2.1.zip",
+  "sha256": "4cd1e12c03313b71fe0a1c44fc22dedc0cb52cc6a203cf0353c91ddfd4de167b",
+  "release_notes": "Correcao da atualizacao: README.md e readme.md colidiam no Windows. readme.md virou README_PROJETO.md e o empacotador agora recusa nomes que diferem so em maiuscula."
 }
