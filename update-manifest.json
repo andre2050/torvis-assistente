@@ -1,6 +1,6 @@
 {
   "product": "T.O.R.V.I.S 2026",
-  "version": "6.5.0",
+  "version": "6.5.1",
   "channel": "stable",
   "format": 1,
   "files": {
@@ -151,8 +151,8 @@
     "core/tls.py": "b164194aba318d7fea44f8f809504ff446aaebb0d462ae8f7a01a28d5aab5dad",
     "core/tts.py": "33ca5d02111c6e523c9c3af9485c4ae6a254de7a6a374b9095c2500186283546",
     "core/undo.py": "b52a0a112d9a375bce41bac8f347a7bf3f16bdded984bdf7589b13e3ef81fe84",
-    "core/update_manager.py": "f711146c73aacda5970088cbd2273c00426b21927451a08edb63129eef25cd11",
-    "core/version.py": "9e5f7c65a42552bb5071e57b14704eb9ea051561aefaf24b18fe71fc4189cb1f",
+    "core/update_manager.py": "87569ca54f6d11182b47d77f988216dc328eca043e8442a94c9f74bd5c005834",
+    "core/version.py": "b317119ef9fc5fd52dcbfe780ac17621478326899fccaf3bfd7e315933ebd27a",
     "core/viseme.py": "80ca3bc752a230e39542adfa575b07e1e998aa0e43492fc9488b3ed22574f0d9",
     "core/wake_word.py": "67365e05aa210f063deaafdf63d6cbbdd8beb1ce7576ec52c47778111e2cce9c",
     "dashboard/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -210,7 +210,7 @@
     "tests/smoke.py": "ee2043c339887f8adbc9adfaf6d18d4feab76493eb87fa17e5b8f30484358ed3",
     "tests/test_adaptive_550.py": "8fa41631fdc65d3c4e8f828dca0ba8fea50bf64d4b13853d2ec215b2b261d046",
     "tests/test_aplicar_v6_2.py": "6008022f41a49906cb32550b1e055c31df8c8e2346db32f79decda6fb3d321d4",
-    "tests/test_atualizacao_um_clique_v6_5.py": "ff1bcf530b8de1792e3f41805c1a3a412b556cde5539298810f19812671ae399",
+    "tests/test_atualizacao_um_clique_v6_5.py": "231c3ad306bd83f08b4df6ac21498d1496d9c00ddfd0b870be19d27496c10490",
     "tests/test_autonomous_540.py": "0286baeb778cc5aa5e1726ae8e48a424f3c9848ec91dbe08dd1aaf01002febef",
     "tests/test_autoupdate_v6_3.py": "e7c0177319f78de55553924f980cbff61e3dca84557f558e3c942c7bfee70d5c",
     "tests/test_colisao_v6_2_1.py": "99181bfdeca1166657832846b7f66a1f1ac073d4f4392f82662ef7c6b82b9377",
@@ -243,6 +243,6 @@
     "tools/render_hubs.py": "c9db6ac0daa804624ff00eb9fb3a041434c36e9ba214b48a40daaaa8fa0d804f",
     "ui.py": "30fbf9428f211a164c81287014cb436cc714866c494ee1e7c76d7c3836eaf6a4",
     "update.example.json": "772524a4c007b10a65a070d301b4d24a0c9ef427d8d7e7f6559970fc3df66521",
-    "update.json": "80c085241cdf8399ff2147dd21d6b32184839e0e50ad3501d6a9f07ec4451ce5"
+    "update.json": "2160e7bd4a6322e2b6c20b78ddedecce0bd54d4c23bae13ec2d317c2ce679c49"
   }
 }

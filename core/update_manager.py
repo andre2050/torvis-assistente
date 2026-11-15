@@ -119,15 +119,33 @@ def _validate_remote_url(url: str, *, allow_file: bool = True) -> str:
     raise ValueError("a fonte de atualização precisa usar HTTPS")
 
 
-def _open_url(url: str, timeout: float):
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+def _open_url(url: str, timeout: float, *, cache_bust: bool = False):
+    """Abre a URL com cabeçalhos que não aceitam cópia velha.
+
+    O raw.githubusercontent.com serve update.json com cache de alguns minutos.
+    Sem isso, clicar em ATUALIZAR SISTEMA logo depois de uma publicação
+    respondia "já está atualizado" com o manifesto anterior — a versão existia e
+    o app dizia que não.
+
+    O parâmetro extra só vale para o manifesto: numa URL de download assinada
+    (o ZIP do release) mexer na query quebra a assinatura.
+    """
+    alvo = url
+    if cache_bust and url.startswith("http"):
+        separador = "&" if "?" in url else "?"
+        alvo = f"{url}{separador}_={int(time.time() * 1000)}"
+    req = urllib.request.Request(alvo, headers={
+        "User-Agent": USER_AGENT,
+        "Cache-Control": "no-cache, no-store, max-age=0",
+        "Pragma": "no-cache",
+    })
     return urllib.request.urlopen(req, timeout=timeout)
 
 
 def fetch_remote_manifest(url: str | None = None, timeout: float = 8.0) -> dict:
     url = _validate_remote_url(url or get_update_manifest_url())
     try:
-        with _open_url(url, timeout) as response:
+        with _open_url(url, timeout, cache_bust=True) as response:
             raw = response.read(MAX_REMOTE_MANIFEST + 1)
     except urllib.error.HTTPError as exc:
         if exc.code == 404:

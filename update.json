@@ -1,7 +1,7 @@
 {
-  "version": "6.5.0",
+  "version": "6.5.1",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.5.0/TORVIS-Assistente-v6.5.0.zip",
-  "sha256": "6c771bb459684c4250b0096b3f07ba2c9a81ff5823353381e7a1822fa69e9586",
-  "release_notes": "Atualizacao de um clique: o botao ATUALIZAR SISTEMA agora busca, baixa, valida e instala sozinho, sem dialogo extra e sem console. O TORVIS fecha, aplica na reabertura (com rollback) e reabre sozinho."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.5.1/TORVIS-Assistente-v6.5.1.zip",
+  "sha256": "f0078615bd3d1d12605231ce558295be67a5a3e7799062b6bd6f09045a8d8de3",
+  "release_notes": "Atualizacao de um clique (6.5.0) e correcao do cache do manifesto (6.5.1): o botao agora consulta a versao sem copia velha, instala e reabre sozinho."
 }

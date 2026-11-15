@@ -165,5 +165,35 @@ class CliqueTests(unittest.TestCase):
         self.assertNotIn("_oferecer_aplicar_atualizacao", fonte)
 
 
+class ManifestoSemCacheTests(unittest.TestCase):
+    """Publicar e clicar em seguida não pode responder "já está atualizado"."""
+
+    def _captura(self, funcao, url):
+        import urllib.request
+        visto = {}
+
+        def falso(req, timeout=None):
+            visto["url"] = req.full_url
+            visto["headers"] = {k.lower(): v for k, v in req.headers.items()}
+            raise RuntimeError("interrompe aqui")
+
+        with mock.patch.object(urllib.request, "urlopen", falso):
+            with self.assertRaises(Exception):
+                funcao(url)
+        return visto
+
+    def test_manifesto_pede_sem_cache(self):
+        from core import update_manager as um
+        visto = self._captura(um.fetch_remote_manifest, "https://exemplo/update.json")
+        self.assertIn("no-cache", visto["headers"].get("cache-control", ""))
+        self.assertIn("_=", visto["url"])          # quebra de cache na query
+
+    def test_download_do_pacote_nao_mexe_na_url_assinada(self):
+        from core import update_manager as um
+        url = "https://objects.githubusercontent.com/x?sig=abc"
+        visto = self._captura(lambda u: um._open_url(u, 5), url)
+        self.assertEqual(visto["url"], url)
+
+
 if __name__ == "__main__":
     unittest.main()
