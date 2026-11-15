@@ -171,7 +171,7 @@
   </div>
 
   <div class="diag" id="diag">Toque em Diagnosticar para testar a chave.</div>
-  <p class="aviso">Para virar ícone na tela inicial: menu do Chrome ⋮ → “Adicionar à tela inicial”.</p>
+  <p class="aviso" id="aviso-instalar">Para virar ícone na tela inicial: menu do Chrome ⋮ → “Adicionar à tela inicial”.</p>
 </dialog>
 
 <script>
@@ -193,6 +193,8 @@ const CASTIGO = { 404: 30, 429: 10, 503: 8, 500: 5, 504: 5 };
 const castigo = {};                       // modelo -> instante em que volta
 const $ = (id) => document.getElementById(id);
 const chat = $("chat"), anel = $("anel"), estado = $("estado"), status = $("status");
+
+const ponte = (typeof window.AndroidPonte === "object" && window.AndroidPonte) ? window.AndroidPonte : null;
 
 const cfg = Object.assign({ chave: "", nivel: "fast", voz: true },
   JSON.parse(localStorage.getItem("torvis.cfg") || "{}"));
@@ -240,7 +242,16 @@ function redesenhar() {
 }
 
 function falar(texto) {
-  if (!cfg.voz || !("speechSynthesis" in window)) return;
+  if (!cfg.voz) return;
+  if (ponte) {                       // APK: voz nativa, funciona com a tela apagada
+    try {
+      defEstado("falando", "falando");
+      ponte.falar(texto);
+      setTimeout(() => { if (!ocupado) defEstado("pronto", ""); }, 4000);
+    } catch (e) { /* voz é enfeite */ }
+    return;
+  }
+  if (!("speechSynthesis" in window)) return;
   try {
     speechSynthesis.cancel();
     const fala = new SpeechSynthesisUtterance(texto);
@@ -366,6 +377,14 @@ async function enviar() {
 /* voz para escutar */
 let reconhecedor = null;
 function montarVoz() {
+  if (ponte) {                       // APK: quem escuta é o SpeechRecognizer
+    $("mic").onclick = () => {
+      $("mic").classList.add("ativo");
+      defEstado("ouvindo", "ouvindo");
+      try { ponte.ouvir(); } catch (e) { pintar("Não consegui abrir o microfone.", "sys"); }
+    };
+    return;
+  }
   const Recon = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Recon) { $("mic").style.display = "none"; return; }
   reconhecedor = new Recon();
@@ -431,6 +450,19 @@ async function diagnosticar() {
   }
 }
 
+/* o que a casca Android chama */
+window.torvisTexto = (texto) => {
+  $("mic").classList.remove("ativo");
+  defEstado("pronto", "");
+  $("texto").value = texto || "";
+  enviar();
+};
+window.torvisAviso = (mensagem) => {
+  $("mic").classList.remove("ativo");
+  defEstado("pronto", "");
+  pintar(mensagem, "sys");
+};
+
 /* ligações */
 $("enviar").addEventListener("click", enviar);
 $("texto").addEventListener("keydown", (ev) => {
@@ -442,6 +474,7 @@ $("texto").addEventListener("input", (ev) => {
   alvo.style.height = Math.min(alvo.scrollHeight, 120) + "px";
 });
 $("mic").addEventListener("click", () => {
+  if (ponte) return;                 // tratado em montarVoz
   if (!reconhecedor) return;
   try { reconhecedor.start(); } catch (e) { reconhecedor.stop(); }
 });
@@ -468,7 +501,10 @@ $("diagnosticar").addEventListener("click", diagnosticar);
   montarVoz();
   redesenhar();
   status.className = cfg.chave ? "dot ok" : "dot";
-  if (!("speechSynthesis" in window)) cfg.voz = false;
+  if (ponte) {
+    const dica = $("aviso-instalar");
+    if (dica) dica.textContent = "Versão Android: a voz usa o microfone e o falante do aparelho.";
+  } else if (!("speechSynthesis" in window)) cfg.voz = false;
 })();
 </script>
 </body>
