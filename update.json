@@ -1,7 +1,7 @@
 {
-  "version": "6.6.0",
+  "version": "6.6.1",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.0/TORVIS-Assistente-v6.6.0.zip",
-  "sha256": "7b54a4fa4de311d4806d419424c735b111e8265fe962868dc0b570c87852c574",
-  "release_notes": "Novas capacidades: ferramentas diarias (calculadora, conversor, senhas), hora e data, notas rapidas, tarefas com projetos, cotacoes, musica local, leitura de e-mail e casa inteligente. Nada existente foi alterado."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.1/TORVIS-Assistente-v6.6.1.zip",
+  "sha256": "9b6f1905d78adbf31be7782995f4892e7c3d51ec1a924171e456ef087ee92048",
+  "release_notes": "Trilha de testes para devs: cria e roda testes de UI em Selenium e Puppeteer, testa APIs com assercoes de status/JSON/tempo, publica resultado em Azure Test Plans, Jira, Test.ai ou JUnit XML, e gera pipeline de CI."
 }

@@ -1,6 +1,6 @@
 {
   "product": "T.O.R.V.I.S 2026",
-  "version": "6.6.0",
+  "version": "6.6.1",
   "channel": "stable",
   "format": 1,
   "files": {
@@ -53,7 +53,8 @@
     "RELEASE-v6.1.1.md": "bd02a7de32cd09e6a5c84e8db29df4b1482d68e175a68e38f8479ea2bbe88975",
     "RELEASE-v6.2.0.md": "99c34b003562ea08347336e89ab7c69b05be2cbd3c6b014f08847fcc9095765e",
     "RELEASE-v6.3.0.md": "fdfac89b6696d0c9bb75f05b6af8cfba6a0a81f755e30501624eb88b7e208fb5",
-    "VERSAO.txt": "54ef76332b31df830699e9d4138396885ab72bae260a034a81ff02bf32d8e90a",
+    "TRILHA-TESTES-v6.6.1.md": "b0550a5ff92630c5ed7000d3d793e32f79f0a8be87efe104439418bb848a4c91",
+    "VERSAO.txt": "b7dcf03d389a39e5471667573a7cb0287ed2f089b3bf6564d57d990747cbf78d",
     "VISAO-INTELIGENTE-v5.2.0.md": "030ef362cdf4030684aed52900804dc7c847a8baacbe41fcfc93d341dfdc6be2",
     "actions/adaptive_intelligence.py": "ddf8f2b2c276ca29b594f97d44aa1b97dd62c5f10643a6c2ebf5d08abfb81179",
     "actions/autonomous_planner.py": "f0bb7dd68398c24e00439fa37cdf4caac0ca494c71e3b3ce4888835234cb9e86",
@@ -79,6 +80,7 @@
     "actions/music_player.py": "84a2aaf0c37c0f2e6d31b2eb469f56e78a71f0ec8a5a48a807dba588d23dd53e",
     "actions/open_app.py": "eb5e5928277a930ce32946b5e48051343a52c4a41e2ba4613d935c06f0c15c96",
     "actions/proactive.py": "d9849c2de753a7c686cacd31cd3ea2645014492af59b2c8f3230c1715d898afc",
+    "actions/qa_dev.py": "bff7880ec3d669fca727c1bdc76d6c82f06e899770e4cfbd994632404b9cabab",
     "actions/quick_notes.py": "f81c03bab12b26155ceadaa2f90bfc17655da702644e9941314799874c180788",
     "actions/reminder.py": "1933a29639410d00481fe1d69cb44b540b6d80a1db6274cba3c6945a4ca9c52a",
     "actions/routines.py": "bee96cdc2fcd6191c5a0fa5cdb22de7bf8d835ca51ecf4423ff9c19d0a646ccd",
@@ -138,6 +140,7 @@
     "core/platform_support.py": "e6d160009124bb096422b6d6c3b83f45d891c9de4cdface2ef469b91f7c52d04",
     "core/plugin_loader.py": "474de45bffb3cbc40b11c6671f1bbf9e523c648ed9203d6732402b031ecf3575",
     "core/prompt.txt": "e9b0f6bd8b5e7423083cfc4a1bdb77fc2a47ce06e00e383363243725d7623c43",
+    "core/qa.py": "bbbecd1d20cb60e6e8a8a0326fa151b302f5968b39eb08dc5cae4ae4384b80dd",
     "core/recovery.py": "7bb2e881a1ace33c20651a7bfccfb4013f4038d10eff043046236bd92bbdcc37",
     "core/report.py": "405579ebd241be29ede2f7e56a0b378f91d992cc84519e6aa82267cf126342ea",
     "core/routines/__init__.py": "841ab74147c45ffce1541df0fe2081500bdb63318093f566750a63d9a2228aaf",
@@ -162,7 +165,7 @@
     "core/undo.py": "b52a0a112d9a375bce41bac8f347a7bf3f16bdded984bdf7589b13e3ef81fe84",
     "core/update_manager.py": "87569ca54f6d11182b47d77f988216dc328eca043e8442a94c9f74bd5c005834",
     "core/userdata.py": "c962a75a643796de783f23c2528cb86b0a9907edc33d3509c6371630900122aa",
-    "core/version.py": "0310761280b722e3e2c302cead417c31bd2b458ca5bf6bd197731bb0b0d0090c",
+    "core/version.py": "2987442e1fb4992c67bde88d49e79e192f1da86bc0c125ef0a11ae95decf645b",
     "core/viseme.py": "80ca3bc752a230e39542adfa575b07e1e998aa0e43492fc9488b3ed22574f0d9",
     "core/wake_word.py": "67365e05aa210f063deaafdf63d6cbbdd8beb1ce7576ec52c47778111e2cce9c",
     "dashboard/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -237,6 +240,7 @@
     "tests/test_laboratorio_v6_4.py": "98010138626b9c1f110569036b5ad2554064633754e00e17f8089b01ed5c3a0b",
     "tests/test_memory_530.py": "67075b9cf578a198164c91423a782de4df70bace5d1aa5686e55a17d8143f2d2",
     "tests/test_neural.py": "118468c09f68c2340e5f8de30e8c847bdce29f882c6951c5042f942cee4a0525",
+    "tests/test_qa_v6_6_1.py": "0e2293811870991eaf658922775357a5ae06a5b4273df4b1b9ba877d03e3946f",
     "tests/test_rag_570.py": "82c5f673b92f9b6b4f9baa258f5593b62f26bb35723141140551473d54c56c8a",
     "tests/test_rede_v601.py": "266688c443081f1edca24f6793323133ad987b8458fe7c05ac6f1013b94c5ffb",
     "tests/test_relatorio_v6_1.py": "dc51a3be206f551d3454d8a9db0903cbabee50defb021775acd849171da45851",
@@ -254,6 +258,6 @@
     "tools/render_hubs.py": "c9db6ac0daa804624ff00eb9fb3a041434c36e9ba214b48a40daaaa8fa0d804f",
     "ui.py": "30fbf9428f211a164c81287014cb436cc714866c494ee1e7c76d7c3836eaf6a4",
     "update.example.json": "772524a4c007b10a65a070d301b4d24a0c9ef427d8d7e7f6559970fc3df66521",
-    "update.json": "7bd3061882c4d2dee7e522a49699aa9d25ba52a07489c1e1de537b2cb4cb2c70"
+    "update.json": "84435ad9b3c50be4b4e8272f1199589e107c2591b71a131432d42737c99d7704"
   }
 }
