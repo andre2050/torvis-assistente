@@ -1,7 +1,7 @@
 {
-  "version": "6.5.1",
+  "version": "6.6.0",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.5.1/TORVIS-Assistente-v6.5.1.zip",
-  "sha256": "f0078615bd3d1d12605231ce558295be67a5a3e7799062b6bd6f09045a8d8de3",
-  "release_notes": "Atualizacao de um clique (6.5.0) e correcao do cache do manifesto (6.5.1): o botao agora consulta a versao sem copia velha, instala e reabre sozinho."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.0/TORVIS-Assistente-v6.6.0.zip",
+  "sha256": "7b54a4fa4de311d4806d419424c735b111e8265fe962868dc0b570c87852c574",
+  "release_notes": "Novas capacidades: ferramentas diarias (calculadora, conversor, senhas), hora e data, notas rapidas, tarefas com projetos, cotacoes, musica local, leitura de e-mail e casa inteligente. Nada existente foi alterado."
 }
