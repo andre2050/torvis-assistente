@@ -1,7 +1,7 @@
 {
-  "version": "6.1.1",
+  "version": "6.2.0",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.1.1/TORVIS-Assistente-v6.1.1.zip",
-  "sha256": "9eb8cb73d345f637d329d2af0931202d729c04f4cc7b0a571d0c272fac92b1ed",
-  "release_notes": "HUBs com metal escovado, duas fontes de luz e bloom; relatorio de um clique; metricas; orcamento diario de IA; escada de modelos medida; erros.log."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.2.0/TORVIS-Assistente-v6.2.0.zip",
+  "sha256": "13ffbead6de51980f34ab542486322d6bbfdc6f9a1f5561ef77171f2e38e02d4",
+  "release_notes": "A atualizacao agora se conclui: aplica com rollback, sem sobrescrever chave e memoria, e o app oferece Aplicar e reabrir."
 }

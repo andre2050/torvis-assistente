@@ -29,7 +29,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
-from core.paths import STATE_DIR, ensure_state_dirs
+from core.paths import APP_DIR, STATE_DIR, ensure_state_dirs
 
 UPDATE_DIR = STATE_DIR / "updates"
 DOWNLOAD_DIR = UPDATE_DIR / "downloads"
@@ -383,6 +383,120 @@ def cancel_pending_update(*, restore_backup: bool = False) -> bool:
     except Exception:
         pass
     return True
+
+
+# Arquivos que pertencem ao usuário, não ao pacote: mesmo que venham no zip, não
+# são sobrescritos. A configuração e a memória vivem fora da pasta do app, mas
+# instalações antigas guardavam tudo junto — por isso a proteção existe.
+PROTEGIDOS = (
+    "config/api_keys.json",
+    "memory/long_term.json",
+    "memory/cognitive_memory.json",
+    ".env",
+)
+
+
+def _protegido(rel: str) -> bool:
+    rel = rel.replace("\\", "/")
+    return rel in PROTEGIDOS or rel.startswith("memory/") or rel.endswith("/.env")
+
+
+def apply_pending_update(
+    *,
+    app_dir: Path | None = None,
+    progress: ProgressCallback | None = None,
+) -> dict:
+    """Aplica o pacote preparado na pasta do app, com rollback em caso de falha.
+
+    Por que existe: `stage_update` deixava tudo validado, mas nada trocava os
+    arquivos — a atualização ficava eternamente "preparada". Aqui a troca é feita
+    arquivo por arquivo, cada um numa operação atômica (escreve `.novo` e
+    substitui). Se qualquer passo falhar, os arquivos já trocados voltam do
+    snapshot feito antes de começar, então o app nunca fica pela metade.
+    """
+    pending = read_pending_update()
+    if not pending:
+        raise ValueError("nenhuma atualização preparada")
+    staged = Path(str(pending.get("path") or ""))
+    if not staged.is_dir():
+        raise ValueError(f"pacote preparado não encontrado em {staged}")
+
+    manifest = verify_package(staged)          # revalida antes de tocar em nada
+    versao_nova = str(manifest.get("version") or "")
+    destino = Path(app_dir).resolve() if app_dir else APP_DIR.resolve()
+    if not destino.is_dir():
+        raise ValueError(f"pasta do aplicativo não encontrada: {destino}")
+
+    _emit(progress, "apply", f"Aplicando {versao_nova} em {destino}...")
+
+    arquivos = [rel for rel in manifest.get("files", {}) if not _protegido(rel)]
+    pulados = [rel for rel in manifest.get("files", {}) if _protegido(rel)]
+
+    with tempfile.TemporaryDirectory(prefix="torvis-rollback-") as temp:
+        rollback = Path(temp)
+        trocados: list[str] = []
+        try:
+            for rel in arquivos:
+                origem = staged / rel
+                alvo = destino / rel
+                anterior = rollback / rel
+                if alvo.is_file():                 # guarda a versão atual
+                    anterior.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(alvo, anterior)
+                alvo.parent.mkdir(parents=True, exist_ok=True)
+                temporario = alvo.with_name(alvo.name + ".novo")
+                shutil.copy2(origem, temporario)
+                temporario.replace(alvo)           # troca atômica por arquivo
+                trocados.append(rel)
+
+            manifesto_origem = staged / "update-manifest.json"
+            if manifesto_origem.is_file():
+                shutil.copy2(manifesto_origem, destino / "update-manifest.json")
+
+        except Exception as exc:                   # noqa: BLE001 — devolver tudo que mexeu
+            for rel in reversed(trocados):
+                anterior = rollback / rel
+                alvo = destino / rel
+                try:
+                    if anterior.is_file():
+                        shutil.copy2(anterior, alvo)
+                    else:
+                        alvo.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            _emit(progress, "rollback", f"Falha ao aplicar; nada foi alterado: {exc}")
+            raise
+
+    _emit(progress, "applied", f"{len(arquivos)} arquivos atualizados.")
+    resultado = {
+        "version": versao_nova,
+        "applied_files": len(arquivos),
+        "skipped_files": pulados,
+        "app_dir": str(destino),
+        "backup_path": str(pending.get("backup_path") or ""),
+        "applied_at": time.time(),
+    }
+    try:
+        (UPDATE_DIR / "applied.json").write_text(
+            json.dumps(resultado, indent=2, ensure_ascii=False), encoding="utf-8")
+        (UPDATE_DIR / "pending.json").unlink(missing_ok=True)
+        shutil.rmtree(staged, ignore_errors=True)   # libera espaco do pacote
+    except OSError:
+        pass
+    return resultado
+
+
+def installed_version(app_dir: Path | None = None) -> str:
+    """Lê a versão direto de core/version.py na pasta do app."""
+    destino = Path(app_dir).resolve() if app_dir else APP_DIR.resolve()
+    arquivo = destino / "core" / "version.py"
+    try:
+        for linha in arquivo.read_text(encoding="utf-8").splitlines():
+            if linha.startswith("VERSAO"):
+                return linha.split("=", 1)[1].strip().strip('"\'')
+    except OSError:
+        pass
+    return "desconhecida"
 
 
 def prepare_remote_update(

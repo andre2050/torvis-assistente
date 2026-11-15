@@ -3435,6 +3435,39 @@ class MainWindow(QMainWindow):
         self._overlay = ov
 
 
+    def _oferecer_aplicar_atualizacao(self):
+        """Depois de preparar o pacote, oferece aplicar — era o passo que faltava.
+
+        Antes o app parava em "atualização preparada" e não havia como concluir
+        pela interface: o usuário ficava com o pacote no disco e a versão antiga.
+        """
+        caixa = QMessageBox(self)
+        caixa.setWindowTitle("Atualização preparada")
+        caixa.setText("Aplicar a atualização agora?")
+        caixa.setInformativeText(
+            "O TORVIS vai fechar, trocar os arquivos (com backup) e reabrir "
+            "em alguns segundos. Seus dados, chave e memória não são alterados.")
+        aplicar = caixa.addButton("Aplicar e reabrir", QMessageBox.ButtonRole.AcceptRole)
+        caixa.addButton("Depois", QMessageBox.ButtonRole.RejectRole)
+        caixa.exec()
+        if caixa.clickedButton() is not aplicar:
+            return
+        try:
+            from core.paths import APP_DIR
+            aplicador = APP_DIR / "APLICAR-ATUALIZACAO.bat"
+            if not aplicador.is_file():
+                self.toast("Aplicador não encontrado; use APLICAR-ATUALIZACAO.bat na pasta do app.")
+                return
+            import subprocess
+            subprocess.Popen(["cmd", "/c", "start", "", str(aplicador)],
+                             cwd=str(APP_DIR), shell=False,
+                             creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+            self._log.append_log("SYS: aplicador de atualização iniciado; fechando o TORVIS.")
+            QTimer.singleShot(400, QApplication.quit)
+        except Exception as exc:
+            self._log.append_log(f"ERR: não foi possível iniciar o aplicador: {exc}")
+            self.toast(f"Falha ao iniciar o aplicador: {exc}")
+
     def _atualizar_sistema(self):
         """Verifica o GitHub oficial e prepara uma atualização validada em background."""
         from core.version import VERSAO
@@ -3487,10 +3520,12 @@ class MainWindow(QMainWindow):
                     "✓ Atualização preparada\n\n"
                     f"Backup: {result.get('backup_path')}\n"
                     f"Pacote preparado: {result.get('staged_path')}\n\n"
-                    "A troca do executável em uso não é feita à força. "
-                    "O pacote fica preparado para o instalador/helper aplicar com segurança.\n\n"
+                    "A troca dos arquivos é feita pelo aplicador, fora da janela: "
+                    "o TORVIS fecha, aplica com backup e reabre.\n\n"
                     f"Notas da versão:\n{notes}"
                 )
+                # Pergunta na thread da interface (este worker é uma thread de trabalho).
+                QTimer.singleShot(0, self._oferecer_aplicar_atualizacao)
             except Exception as exc:
                 show(
                     f"Versão instalada: {VERSAO}\n\n"

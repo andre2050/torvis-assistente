@@ -1,26 +1,50 @@
-# Python
+# ── MARK LVI — what never belongs in the repository ──────────────────────────
+# Everything listed here is created by the app on first run. A fresh clone with
+# none of it present boots straight to the setup screen, which is the intended
+# first experience — so nothing here needs to be committed, and some of it must
+# never be.
+
+# ── Secrets. Committing any of these publishes them. ──────────────────────────
+config/api_keys.json          # your Gemini API key, plus per-plugin credentials
+config/certs/                 # the dashboard's TLS private key and certificate
+config/whatsapp_web/          # a LINKED WhatsApp session — committing it hands
+                              # somebody your WhatsApp account, not just a key
+**/token*.json                # Google OAuth tokens (Gmail / Calendar plugins)
+**/client_secret*.json        # Google OAuth client secrets
+*credentials*.json
+.env
+.env.*
+
+# ── Personal data the assistant accumulates about you ─────────────────────────
+memory/long_term.json
+memory/*.db
+
+# ── Python build noise ────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
-.pytest_cache/
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
 .venv/
 venv/
 env/
+ENV/
 
-# Saídas de execução (não são código)
+# ── Editors and operating systems ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Runtime output ────────────────────────────────────────────────────────────
 *.log
-*.jsonl
-erros.old.log
-relatorio-torvis.txt
-relatorio_chave.txt
-model_ladder.json
-uso_ia.json
-
-# Build
-build/
-dist/
-*.spec
-*.exe
-
-# Configuração local (nunca versionar chave)
-.env
-config/local.json
+logs/
+downloads/
+screenshots/
