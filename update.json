@@ -1,7 +1,8 @@
 {
-  "version": "6.6.3",
+  "version": "6.6.9",
   "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.3/TORVIS-Assistente-v6.6.3.zip",
-  "sha256": "1f80a242be7ab96d7a8d6fe68548387a38b30409f0f8e5282d7d331673b73b34",
-  "release_notes": "ATUALIZAR-TORVIS.pyw: atualizacao por janela, dois cliques, sem terminal. Confere SHA-256, recusa pacote corrompido e preserva config, memorias, notas e tarefas. Botao do app agora aponta o caminho quando falha."
+  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-Assistente-v6.6.9.zip",
+  "sha256": "8269a4fbe3b5e6759fd45b58b1452d38756672e01beeeeb220d450027f060f7f",
+  "apk": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-2026-v6.6.9.apk",
+  "notes": "Escrita segura no agente de codigo: nao grava resposta cortada, troca de modelo quando a cota estoura e explica o que falhou."
 }
