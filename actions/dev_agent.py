@@ -24,9 +24,48 @@ PROJECTS_DIR     = Path.home() / "Desktop" / "Assistente InteligenteProjects"
 MAX_FIX_ATTEMPTS = 5
 # Model choice, timeout and fallback ladder all live in core/gemini.py.
 from core import gemini
+from core import edicao_segura
 
 MODEL_PLANNER    = gemini.SMART
 MODEL_WRITER     = gemini.SMART
+
+# Modelos postos de castigo: nome -> instante em que voltam a ser tentados.
+# Antes, um 429 no modelo escolhido encerrava a escrita daquele arquivo; agora
+# ele só sai da fila por alguns minutos e os outros seguem trabalhando.
+_DESCANSO: dict[str, float] = {}
+_DESCANSO_COTA = 600.0
+_DESCANSO_INSTAVEL = 120.0
+
+
+def _modelos_de_escrita() -> list[str]:
+    """Ordem de tentativa, sem repetir."""
+    vistos: set[str] = set()
+    saida: list[str] = []
+    for nome in (MODEL_WRITER, gemini.FAST, gemini.SMART):
+        if nome and nome not in vistos:
+            vistos.add(nome)
+            saida.append(nome)
+    return saida
+
+
+def _texto_de_escrita(prompt: str, *, purpose: str, fast: bool = False) -> str:
+    """Pede o código à escada inteira; erro de um modelo não derruba o resto."""
+    erros: list[str] = []
+    for modelo in _modelos_de_escrita():
+        ate = _DESCANSO.get(modelo, 0.0)
+        if ate > time.time():
+            erros.append(f"{modelo}: em descanso por cota")
+            continue
+        try:
+            return _model_text(prompt, model_name=modelo, fast=fast, purpose=purpose)
+        except Exception as exc:  # noqa: BLE001 - cada modelo tem seu motivo
+            texto = str(exc).lower()
+            if _is_rate_limit(exc) or "429" in texto or "quota" in texto or "cota" in texto:
+                _DESCANSO[modelo] = time.time() + _DESCANSO_COTA
+            elif _is_transient_model_error(exc):
+                _DESCANSO[modelo] = time.time() + _DESCANSO_INSTAVEL
+            erros.append(f"{modelo}: {str(exc)[:160]}")
+    raise edicao_segura.EscritaFalhou("; ".join(erros) or "nenhum modelo disponível")
 
 def _get_api_key() -> str:
     with open(API_CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -450,16 +489,24 @@ General rules:
 Code for {file_path}:"""
 
     try:
-        raw = _model_text(prompt, model_name=MODEL_WRITER, fast=fast, purpose=f"write {file_path}")
-        code = _strip_fences(raw)
-
-        full_path = project_dir / file_path
-        full_path.parent.mkdir(parents=True, exist_ok=True)
-        full_path.write_text(code, encoding="utf-8")
-
+        code = edicao_segura.tentar_gerar(
+            prompt,
+            lambda pedido: _strip_fences(
+                _texto_de_escrita(pedido, purpose=f"write {file_path}", fast=fast)
+            ),
+            caminho=file_path,
+            ao_falhar=lambda motivo: print(f"[DevAgent] ↻ {file_path}: {motivo}"),
+        )
+        resultado = edicao_segura.escrever_com_seguranca(project_dir / file_path, code)
+        if not resultado.ok:
+            raise edicao_segura.EscritaFalhou(
+                edicao_segura.relato_para_pessoa(file_path, [resultado.motivo])
+            )
         print(f"[DevAgent] ✅ Written: {file_path} ({len(code)} chars)")
         return code
 
+    except edicao_segura.EscritaFalhou:
+        raise
     except Exception as e:
         if _is_rate_limit(e):
             raise RateLimitError(str(e))
@@ -600,6 +647,7 @@ def _fix_files(
         files_to_fix.append(entry_point)
 
     updated_codes: dict[str, str] = {}
+    motivos: list[str] = []
 
     for fix_path in files_to_fix:
         current_code = file_codes.get(fix_path, "")
@@ -643,22 +691,76 @@ Rules:
 Fixed code for {fix_path}:"""
 
         try:
-            raw = _model_text(prompt, model_name=MODEL_PLANNER, fast=fast, purpose=f"fix {fix_path}")
-            fixed = _strip_fences(raw)
-
-            full_path = project_dir / fix_path
-            full_path.parent.mkdir(parents=True, exist_ok=True)
-            full_path.write_text(fixed, encoding="utf-8")
-
+            fixed = _corrigir_um_arquivo(
+                fix_path, current_code, prompt, project_dir=project_dir, fast=fast,
+            )
             updated_codes[fix_path] = fixed
             print(f"[DevAgent] 🔧 Fixed: {fix_path}")
 
+        except edicao_segura.EscritaFalhou as e:
+            motivos.append(str(e))
+            print(f"[DevAgent] ⚠️ Could not fix {fix_path}: {e}")
         except Exception as e:
             if _is_rate_limit(e):
                 raise RateLimitError(str(e))
+            motivos.append(f"{fix_path}: {e}")
             print(f"[DevAgent] ⚠️ Could not fix {fix_path}: {e}")
 
+    if motivos and not updated_codes:
+        # Nada foi alterado: melhor dizer exatamente por quê do que devolver
+        # "todos falharam" e deixar o usuário sem pista.
+        raise edicao_segura.EscritaFalhou(edicao_segura.relato_para_pessoa(files_to_fix[0], motivos))
+
     return updated_codes
+
+def _corrigir_um_arquivo(caminho: str, atual: str, prompt_completo: str, *,
+                         project_dir: Path | None = None,
+                         fast: bool = False) -> str:
+    """Conserta um arquivo existente sem reescrever tudo o que já funcionava.
+
+    Arquivo grande (CSS/JS de site, por exemplo) é corrigido por trecho: pedir o
+    arquivo inteiro ao modelo era o que fazia a resposta chegar cortada e o
+    arquivo ser gravado pela metade.
+    """
+    # Sempre relativo à pasta do projeto: um caminho relativo solto gravaria
+    # fora dela, no diretório de onde o TORVIS foi aberto.
+    destino = (Path(project_dir) / caminho) if project_dir is not None else Path(caminho)
+    grande = len(atual) > 4000
+
+    if grande:
+        instrucao = ("Corrija os erros apontados no arquivo, mexendo só no trecho "
+                     "que precisa mudar.")
+        recorte = atual[:2500]
+        pedido = edicao_segura.pedido_de_patch(instrucao, recorte, caminho)
+        for _ in range(2):
+            resposta = _texto_de_escrita(pedido, purpose=f"patch {caminho}", fast=fast)
+            achado = edicao_segura.ler_patch(_strip_fences(resposta))
+            if not achado:
+                continue
+            antes, depois = achado
+            ok, novo, _motivo = edicao_segura.aplicar_trecho(atual, antes, depois)
+            if not ok:
+                continue
+            resultado = edicao_segura.escrever_com_seguranca(destino, novo)
+            if resultado.ok:
+                return novo
+        # trecho não deu certo: cai para a reescrita completa, validada
+        print(f"[DevAgent] trecho não aplicou em {caminho}; tentando arquivo completo")
+
+    texto = edicao_segura.tentar_gerar(
+        prompt_completo,
+        lambda pedido: _strip_fences(
+            _texto_de_escrita(pedido, purpose=f"fix {caminho}", fast=fast)
+        ),
+        caminho=caminho,
+    )
+    resultado = edicao_segura.escrever_com_seguranca(destino, texto)
+    if not resultado.ok:
+        raise edicao_segura.EscritaFalhou(
+            edicao_segura.relato_para_pessoa(caminho, [resultado.motivo])
+        )
+    return texto
+
 
 def _safe_file_plan(plan: dict) -> list[dict]:
     """Check model-suggested paths before writing; reject traversal and duplicates.
@@ -801,6 +903,7 @@ def _build_project(
         file_path = file_info["path"]
         _update(file=file_path, file_state="writing")
         log(f"Writing {file_path}...")
+        ultimo_erro = ""
         for attempt in range(2):
             try:
                 code = _write_file(
@@ -826,9 +929,13 @@ def _build_project(
                     log(f"Writer stalled for {file_path}: {type(exc).__name__}. Retrying once...")
                     time.sleep(1)
                     continue
+                ultimo_erro = str(exc)
                 log(f"Failed {file_path}: {type(exc).__name__}: {str(exc)[:160]}")
                 break
         _update(file=file_path, file_state="failed")
+        with _state_lock:
+            if _JOB:
+                _JOB.setdefault("errors", {})[file_path] = ultimo_erro[:400]
         return file_path, None
 
     if not file_codes:
@@ -856,8 +963,15 @@ def _build_project(
     missing = [fi["path"] for fi in files if fi["path"] not in file_codes]
     if missing:
         log("Incomplete project; not marking successful: " + ", ".join(missing))
+        detalhes = ""
+        with _state_lock:
+            erros = dict((_JOB or {}).get("errors") or {})
+        for caminho in missing:
+            if erros.get(caminho):
+                detalhes += f"\n· {caminho}: {erros[caminho]}"
         msg = (f"Project '{proj_name}' is partially created at {project_dir}, "
                f"but these files could not be generated: {', '.join(missing)}. "
+               f"{detalhes}"
                "The Cowork agent did not mark this job as completed successfully.")
         return msg
 
@@ -921,6 +1035,10 @@ def _build_project(
                 _update(file=fixed, file_state="done")
                 log(f"Fixed {fixed}")
             time.sleep(1)
+        except edicao_segura.EscritaFalhou as exc:
+            msg = str(exc)
+            if speak: speak("Não consegui corrigir o código; o arquivo ficou como estava.")
+            return msg
         except RateLimitError:
             msg = "Rate limit reached during fix. Project saved, check it manually in VSCode."
             if speak: speak(msg)
