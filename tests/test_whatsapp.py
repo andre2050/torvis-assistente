@@ -180,3 +180,20 @@ class ConfigTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class RegistroTests(unittest.TestCase):
+    """A ferramenta precisa entrar como core, senão é descartada na hora de
+    montar a lista que vai para o modelo e o usuário 'não vê' a secretária."""
+
+    def test_metadados_reconhecidos_pelo_carregador(self):
+        from core import action_loader as al
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "whatsapp_secretary", "actions/whatsapp_secretary.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        r = al._validate(mod, "whatsapp_secretary.py")
+        self.assertTrue(r.valid, r.error)
+        self.assertEqual(r.tier, "core")
+        self.assertEqual(r.behavior, "NON_BLOCKING")
+        self.assertTrue(r.brief)
