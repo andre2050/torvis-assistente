@@ -1081,7 +1081,7 @@ function limparConversa() {
 }
 
 /* ═══ atualização do próprio app ══════════════════════════════════════════ */
-const REPO_RELEASE = "https://api.github.com/repos/andre2050/torvis-assistente/releases/latest";
+const REPO_RELEASES = "https://api.github.com/repos/andre2050/torvis-assistente/releases?per_page=30";
 
 function versaoAtual() {
   if (ponte && ponte.versao) { try { return String(ponte.versao()); } catch (e) { } }
@@ -1100,22 +1100,32 @@ function compararVersao(a, b) {
 }
 
 async function procurarAtualizacao() {
-  let resposta;
-  try {
-    resposta = await fetch(REPO_RELEASE, { headers: { "Accept": "application/vnd.github+json" } });
-  } catch (e) {
-    throw new Error("sem acesso ao GitHub agora");
+  // O app do celular tem versão própria. Só entram releases cuja tag começa
+  // com android-, para uma correção do PC não aparecer como atualização aqui.
+  const r = await fetch(REPO_RELEASES, { headers: { "Accept": "application/vnd.github+json" } });
+  if (!r.ok) throw new Error("o GitHub respondeu " + r.status);
+  const lista = await r.json();
+  const candidatas = [];
+  for (const rel of Array.isArray(lista) ? lista : []) {
+    if (rel.draft || rel.prerelease) continue;
+    const apk = (rel.assets || []).find((a) => /\.apk$/i.test(a.name));
+    if (!apk) continue;
+    const tag = String(rel.tag_name || "");
+    candidatas.push({
+      tag: tag,
+      versao: tag.replace(/^android-/i, "").replace(/^v/i, ""),
+      url: apk.browser_download_url,
+      doApp: /^android-/i.test(tag)
+    });
   }
-  if (resposta.status === 403) throw new Error("o GitHub pediu uma pausa; tente em alguns minutos");
-  if (!resposta.ok) throw new Error("o GitHub respondeu " + resposta.status);
-  const dados = await resposta.json();
-  const nova = String(dados.tag_name || "").replace(/^v/, "");
-  const apk = (dados.assets || []).find((a) => /\.apk$/i.test(a.name));
-  if (!nova) throw new Error("não entendi a resposta do GitHub");
-  if (!apk) throw new Error("a versão " + nova + " foi publicada sem APK");
+  // Sem cair para as releases do PC: elas têm APK antigo e confundiriam.
+  const usar = candidatas.filter((c) => c.doApp);
+  if (!usar.length) throw new Error("nenhuma versão do app publicada ainda");
+  usar.sort((a, b) => compararVersao(b.versao, a.versao));
+  const nova = usar[0];
   const atual = versaoAtual();
-  return { atual: atual, nova: nova, url: apk.browser_download_url,
-           tamanho: Math.round((apk.size || 0) / 1024), maisNova: compararVersao(nova, atual) > 0 };
+  return { atual: atual, nova: nova.versao, url: nova.url, tag: nova.tag,
+           maisNova: compararVersao(nova.versao, atual) > 0 };
 }
 
 async function verificarAtualizacao(instalar) {
