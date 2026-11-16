@@ -48,3 +48,7 @@ desktop.ini
 logs/
 downloads/
 screenshots/
+
+# artefato gerado pelo compilar.sh
+torvis-android/apk/TORVIS-2026.apk
+torvis-android/apk/build/
