@@ -1,8 +1,7 @@
 {
-    "version": "7.0.0",
+    "version": "7.4.0",
     "channel": "stable",
-    "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-Assistente-v6.6.9.zip",
-    "sha256": "8269a4fbe3b5e6759fd45b58b1452d38756672e01beeeeb220d450027f060f7f",
-    "apk": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-2026-v6.6.9.apk",
-    "notes": "TORVIS v7.0.0: Cofre de segredos DPAPI, prote\u00e7\u00e3o contra for\u00e7a bruta na ponte PC, RAG com embeddings ONNX locais e CI GitHub Actions."
+    "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v7.4.0/TORVIS-Assistente-v7.4.0.zip",
+    "sha256": "0c1e5007a81f036a744f61445086d90c8df56cca30caf57bd6ecbc644082a67b",
+    "notes": "TORVIS 7.4.0: pc_master abre qualquer programa instalado, fecha janelas e programas, cria site/app/jogo do zero e abre no editor. Rodape neutro e modelos Minimal Pro e Carbon."
 }

@@ -36,6 +36,13 @@ DOWNLOAD_DIR = UPDATE_DIR / "downloads"
 DEFAULT_UPDATE_MANIFEST_URL = (
     "https://raw.githubusercontent.com/andre2050/torvis-assistente/main/update.json"
 )
+# O update.json do branch é um arquivo como outro qualquer: fica velho quando
+# alguém publica uma release e esquece de mexer nele. O asset do release é
+# escrito no mesmo passo da publicação, então ele é o retrato da versão atual.
+# As duas fontes são consultadas e vence a maior versão.
+MIRROR_MANIFEST_URLS = (
+    "https://github.com/andre2050/torvis-assistente/releases/latest/download/update.json",
+)
 USER_AGENT = "TORVIS-Update/5.6.1"
 MAX_REMOTE_MANIFEST = 256 * 1024
 MAX_UPDATE_ZIP = 1024 * 1024 * 1024  # 1 GiB
@@ -142,8 +149,9 @@ def _open_url(url: str, timeout: float, *, cache_bust: bool = False):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
-def fetch_remote_manifest(url: str | None = None, timeout: float = 8.0) -> dict:
-    url = _validate_remote_url(url or get_update_manifest_url())
+def _manifesto_de(url: str, timeout: float) -> dict:
+    """Lê e valida um manifesto de uma única fonte."""
+    url = _validate_remote_url(url)
     try:
         with _open_url(url, timeout, cache_bust=True) as response:
             raw = response.read(MAX_REMOTE_MANIFEST + 1)
@@ -173,6 +181,44 @@ def fetch_remote_manifest(url: str | None = None, timeout: float = 8.0) -> dict:
     _version_tuple(version)
 
     package_url = str(manifest.get("package_url") or manifest.get("package") or "").strip()
+    if not package_url:
+        raise ValueError("manifesto remoto sem package_url")
+    package_url = urllib.parse.urljoin(url, package_url)
+    manifest["package_url"] = _validate_remote_url(package_url)
+
+    sha = str(manifest.get("sha256") or "").strip().lower()
+    if not _is_hex_sha256(sha):
+        raise ValueError("manifesto remoto sem SHA-256 válido")
+    manifest["sha256"] = sha
+    manifest["manifest_url"] = url
+    manifest.setdefault("channel", "stable")
+    return manifest
+
+
+def fetch_remote_manifest(url: str | None = None, timeout: float = 8.0) -> dict:
+    """Consulta todas as fontes e devolve a de MAIOR versão.
+
+    Uma fonte que falha não derruba a checagem: se o release responder e o
+    branch estiver velho, vale o release. Sem nenhuma resposta, o erro da
+    fonte principal sobe — o usuário precisa saber que a checagem falhou.
+    """
+    principal = _validate_remote_url(url or get_update_manifest_url())
+    fontes = [principal] + [u for u in MIRROR_MANIFEST_URLS if u != principal]
+    lidos: list[dict] = []
+    erro_principal: Exception | None = None
+    for fonte in fontes:
+        try:
+            lidos.append(_manifesto_de(fonte, timeout))
+        except Exception as exc:
+            if fonte == principal:
+                erro_principal = exc
+            continue
+    if not lidos:
+        if erro_principal:
+            raise erro_principal
+        raise RuntimeError("nenhuma fonte de atualização respondeu")
+    lidos.sort(key=lambda m: _version_tuple(str(m.get("version"))), reverse=True)
+    return lidos[0]
     if not package_url:
         raise ValueError("manifesto remoto sem package_url")
     package_url = urllib.parse.urljoin(url, package_url)
