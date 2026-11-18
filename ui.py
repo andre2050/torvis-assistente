@@ -101,6 +101,11 @@ class AssistenteInteligenteUI:
     def __init__(self, face_path: str, size=None):
         _apply_ui_scale()
         self._app = QApplication.instance() or QApplication(sys.argv)
+        try:
+            from gui import design
+            design.apply(self._app)
+        except Exception as _e:      # noqa: BLE001 - estilo nunca impede abrir
+            print(f"[UI] folha de estilo não aplicada: {_e}")
         self._app.setStyle("Fusion")
         self._win = MainWindow(face_path)
         self.root = _RootShim(self._app)

@@ -98,27 +98,33 @@ _OS = platform.system()  # "Windows" | "Darwin" | "Linux"
 
 
 class C:
-    BG        = "#00060a"
-    PANEL     = "#010d14"
-    PANEL2    = "#010f18"
-    BORDER    = "#0d3347"
-    BORDER_B  = "#1a5c7a"
-    BORDER_A  = "#0f4060"
-    PRI       = "#00d4ff"
-    PRI_DIM   = "#007a99"
-    PRI_GHO   = "#001f2e"
-    ACC       = "#ff6b00"
-    ACC2      = "#ffcc00"
-    GREEN     = "#00ff88"
-    GREEN_D   = "#00aa55"
-    RED       = "#ff3355"
-    MUTED_C   = "#ff3366"
-    TEXT      = "#8ffcff"
-    TEXT_DIM  = "#3a8a9a"
-    TEXT_MED  = "#5ab8cc"
-    WHITE     = "#d8f8ff"
-    DARK      = "#000d14"
-    BAR_BG    = "#011520"
+    """Minimal Pro: base neutra de ardósia, um acento só (ciano), texto claro.
+
+    Antes o fundo e o texto eram os dois muito saturados, e a tela inteira puxava
+    para o ciano — cansava a vista em uso longo e escondia o que era clicável.
+    Agora o fundo é neutro, o texto é claro e o ciano aparece só onde há ação.
+    """
+    BG        = "#0b0e12"
+    PANEL     = "#11161d"
+    PANEL2    = "#151c25"
+    BORDER    = "#1f2937"
+    BORDER_B  = "#2b3a4b"
+    BORDER_A  = "#233043"
+    PRI       = "#4cc2ff"
+    PRI_DIM   = "#2a7fa6"
+    PRI_GHO   = "#10222e"
+    ACC       = "#ff8a3d"
+    ACC2      = "#ffc857"
+    GREEN     = "#35d07f"
+    GREEN_D   = "#1f8f57"
+    RED       = "#ff5c6c"
+    MUTED_C   = "#ff5c6c"
+    TEXT      = "#e6edf3"
+    TEXT_DIM  = "#7d8b99"
+    TEXT_MED  = "#a7b4c2"
+    WHITE     = "#f7fbfe"
+    DARK      = "#090c10"
+    BAR_BG    = "#0e1319"
 
 
 # Keys tied to the accent colour — status colours (ACC, GREEN, RED…) stay fixed
