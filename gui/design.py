@@ -167,6 +167,13 @@ def qss() -> str:
 def apply(app: QApplication | None = None) -> None:
     """Aplica a folha base no aplicativo inteiro. Painéis continuam livres para
     sobrescrever o seu próprio estilo; isto é só o piso comum."""
+    # O modelo visual vem do config: quem escolheu Carbon não deve receber a
+    # folha do Minimal Pro só porque o app foi reaberto.
+    try:
+        from gui.theme import aplicar_modelo, modelo_atual
+        aplicar_modelo(modelo_atual())
+    except Exception:
+        pass
     alvo = app or QApplication.instance()
     if alvo is not None:
         alvo.setStyleSheet(qss())

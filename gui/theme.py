@@ -212,3 +212,30 @@ def retheme_all_widgets(old: dict[str, str], new: dict[str, str]) -> None:
 def qcol(h: str, a: int = 255) -> QColor:
     c = QColor(h); c.setAlpha(a); return c
 
+
+
+def aplicar_modelo(nome: str = "minimal") -> str:
+    """Troca o modelo visual em uso, sem reiniciar o app.
+
+    Guarda o que for alterado em `C`, de modo que voltar ao padrão devolve
+    exatamente os valores originais mesmo depois de duas trocas seguidas.
+    """
+    from gui.modelos import MODELOS, PADRAO
+
+    if not hasattr(C, "_origem_modelo"):
+        C._origem_modelo = {k: getattr(C, k) for k in dir(C)
+                            if k.isupper() and isinstance(getattr(C, k), str)}
+    base = C._origem_modelo
+    alvo = MODELOS.get(nome) or MODELOS[PADRAO]
+    cores = dict(base)
+    cores.update(alvo.get("cores") or {})
+    for chave, valor in cores.items():
+        setattr(C, chave, valor)
+    C.MODELO = "minimal" if alvo is MODELOS[PADRAO] else nome
+    C.RAIO = alvo.get("raio", 14)
+    C.RAIO_CAMPO = alvo.get("raio_campo", 10)
+    return C.MODELO
+
+
+def modelo_atual() -> str:
+    return getattr(C, "MODELO", "minimal")

@@ -188,3 +188,55 @@ def brilho_topo(p, rect, raio: float = 12.0, alpha: int = 22) -> None:
     p.setBrush(Qt.BrushStyle.NoBrush)
     p.drawRoundedRect(QRectF(r.left() + 1, r.top() + 1, r.width() - 2, r.height() - 1),
                       raio - 0.5, raio - 0.5)
+
+
+def superficie_realista(p, rect, raio: float = 12.0, elevacao: float = 2.0,
+                        base=None, topo=None) -> None:
+    """Pinta uma superfície com o mínimo de física que o olho pede.
+
+    Sombra deslocada para baixo, gradiente curto de cima para baixo, uma linha
+    de luz na aresta superior, uma linha escura na inferior e um brilho
+    especular na faixa de cima. É o que separa um cartão de um retângulo.
+    """
+    from PyQt6.QtCore import QRectF
+    from PyQt6.QtGui import QBrush, QColor, QLinearGradient, QPen
+    from gui.theme import qcol
+
+    r = QRectF(rect)
+    # 1. sombra: deslocada, mais opaca perto do objeto
+    for i in range(12, 0, -1):
+        alpha = int(255 * 0.05 * (i / 12) ** 2.4)
+        if alpha <= 0:
+            continue
+        sr = QRectF(r).adjusted(-i * 0.8, i * 0.25 + elevacao, i * 0.8,
+                                i * 0.9 + elevacao)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QBrush(QColor(0, 0, 0, alpha)))
+        p.drawRoundedRect(sr, raio + i * 0.55, raio + i * 0.55)
+    # 2. corpo
+    escuro = QColor(base) if base is not None else qcol(C.PANEL)
+    claro = QColor(topo) if topo is not None else qcol(C.PANEL2)
+    g = QLinearGradient(r.topLeft(), r.bottomLeft())
+    g.setColorAt(0.0, claro)
+    g.setColorAt(0.45, escuro)
+    g.setColorAt(1.0, escuro.darker(118))
+    p.setBrush(QBrush(g))
+    p.setPen(QPen(qcol(C.BORDER), 1))
+    p.drawRoundedRect(r, raio, raio)
+    # 3. aresta de luz em cima, aresta escura embaixo
+    p.setBrush(Qt.BrushStyle.NoBrush)
+    from PyQt6.QtCore import QLineF
+    p.setPen(QPen(QColor(255, 255, 255, 26), 1))
+    p.drawLine(QLineF(r.left() + raio * 0.7, r.top() + 1.2,
+                      r.right() - raio * 0.7, r.top() + 1.2))
+    p.setPen(QPen(QColor(0, 0, 0, 90), 1))
+    p.drawLine(QLineF(r.left() + raio * 0.7, r.bottom() - 1.2,
+                      r.right() - raio * 0.7, r.bottom() - 1.2))
+    # 4. brilho especular: curto, na faixa de cima
+    esp = QLinearGradient(r.topLeft(), r.bottomLeft())
+    esp.setColorAt(0.0, QColor(255, 255, 255, 16))
+    esp.setColorAt(0.30, QColor(255, 255, 255, 4))
+    esp.setColorAt(0.31, QColor(255, 255, 255, 0))
+    p.setPen(Qt.PenStyle.NoPen)
+    p.setBrush(QBrush(esp))
+    p.drawRoundedRect(r.adjusted(1, 1, -1, -1), raio - 1, raio - 1)
