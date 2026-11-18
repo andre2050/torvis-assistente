@@ -63,3 +63,24 @@ class EscolhaDaFonteTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CacheBustTest(unittest.TestCase):
+    """Acrescentar query na URL do asset de release quebra o link assinado."""
+
+    def test_release_nao_recebe_query(self):
+        vistos = []
+
+        def leitor(url, timeout):
+            vistos.append(url)
+            return _man("7.4.1")
+
+        alvo = update_manager.MIRROR_MANIFEST_URLS[0]
+        with mock.patch.object(update_manager, "_open_url") as abrir:
+            abrir.return_value.__enter__.return_value.read.return_value = (
+                b'{"version":"7.4.1","package_url":"https://exemplo/p.zip","sha256":"' + b"a" * 64 + b'"}')
+            for url in ("https://github.com/andre2050/torvis-assistente/releases/latest/download/update.json",
+                        "https://raw.githubusercontent.com/andre2050/torvis-assistente/main/update.json"):
+                update_manager._manifesto_de(url, 5)
+            chamadas = [c.kwargs.get("cache_bust") for c in abrir.call_args_list]
+        self.assertEqual(chamadas, [False, True], vistos or alvo)

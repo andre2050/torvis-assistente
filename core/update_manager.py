@@ -152,8 +152,12 @@ def _open_url(url: str, timeout: float, *, cache_bust: bool = False):
 def _manifesto_de(url: str, timeout: float) -> dict:
     """Lê e valida um manifesto de uma única fonte."""
     url = _validate_remote_url(url)
+    # Cache só se combate onde existe cache: o raw.githubusercontent guarda o
+    # arquivo do branch. A URL do asset de release redireciona para um link
+    # assinado, e acrescentar query nela quebra o download (404 no JSON).
+    cacheavel = urllib.parse.urlparse(url).netloc == "raw.githubusercontent.com"
     try:
-        with _open_url(url, timeout, cache_bust=True) as response:
+        with _open_url(url, timeout, cache_bust=cacheavel) as response:
             raw = response.read(MAX_REMOTE_MANIFEST + 1)
     except urllib.error.HTTPError as exc:
         if exc.code == 404:

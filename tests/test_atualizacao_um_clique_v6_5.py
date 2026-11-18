@@ -183,10 +183,18 @@ class ManifestoSemCacheTests(unittest.TestCase):
         return visto
 
     def test_manifesto_pede_sem_cache(self):
+        """O arquivo do branch continua pedido sem cache.
+
+        A quebra de cache vale para o raw.githubusercontent, que guarda o
+        arquivo por alguns minutos. A URL do asset de release redireciona para
+        um link assinado e não recebe query — coberto em
+        test_manifesto_duas_fontes.CacheBustTest.
+        """
         from core import update_manager as um
-        visto = self._captura(um.fetch_remote_manifest, "https://exemplo/update.json")
-        self.assertIn("no-cache", visto["headers"].get("cache-control", ""))
+        visto = self._captura(lambda u: um._open_url(u, 5, cache_bust=True),
+                               "https://raw.githubusercontent.com/x/update.json")
         self.assertIn("_=", visto["url"])          # quebra de cache na query
+        self.assertIn("no-cache", visto["headers"].get("cache-control", ""))
 
     def test_download_do_pacote_nao_mexe_na_url_assinada(self):
         from core import update_manager as um
