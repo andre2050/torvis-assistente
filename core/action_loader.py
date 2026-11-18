@@ -30,6 +30,8 @@ import inspect
 import re
 import sys
 import traceback
+from core import boot_cache
+from core.userdata import USERDATA_DIR
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
@@ -167,7 +169,8 @@ class ActionRegistry:
             except Exception:
                 pass
         try:
-            return _call_handler(rec.handler, parameters, ctx or {}) or "Done."
+            handler = rec.handler or _resolver(rec)
+            return _call_handler(handler, parameters, ctx or {}) or "Done."
         except Exception as e:
             self._logger(f"Action '{name}' crashed during run(): {e}")
             traceback.print_exc()
@@ -222,6 +225,45 @@ def _validate(module, filename: str) -> ActionRecord:
                         brief=_opt_text(tool.get("brief")))
 
 
+def _cache_completo(cache: dict, files: list, reserved: set) -> bool:
+    """O manifesto cobre exatamente os arquivos de hoje, sem colisão?"""
+    nomes = set()
+    for path in files:
+        if path.name.startswith("_"):
+            continue
+        entrada = cache.get(path.name)
+        if not boot_cache.confere(path, entrada):
+            return False
+        nome = entrada.get("nome")
+        if nome in reserved or nome in nomes:
+            return False
+        nomes.add(nome)
+    return True
+
+
+_DIR_ACOES: Optional[Path] = None
+
+
+def _resolver(rec: ActionRecord):
+    """Importa o módulo da ação só na primeira chamada."""
+    module_name = f"actions.{Path(rec.file).stem}"
+    module = sys.modules.get(module_name)
+    if module is None:
+        base = _DIR_ACOES or (Path(__file__).resolve().parent.parent / "actions")
+        caminho = base / rec.file
+        spec = importlib.util.spec_from_file_location(module_name, caminho)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"could not import {rec.file}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+    tool = getattr(module, "TOOL", None) or {}
+    handler = tool.get("handler")
+    if not callable(handler):
+        raise RuntimeError(f"action {rec.name} lost its handler")
+    return handler
+
+
 def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
                      logger: Callable[[str], None] = print) -> ActionRegistry:
     """
@@ -231,12 +273,35 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
     Import/validation errors and name collisions are logged and the file is
     skipped — they NEVER raise out of this function.
     """
+    global _DIR_ACOES
     reserved = reserved_names or set()
     actions_dir.mkdir(parents=True, exist_ok=True)
+    _DIR_ACOES = actions_dir
     valid: dict[str, ActionRecord] = {}
     all_records: list[ActionRecord] = []
 
     files = sorted(actions_dir.glob("*.py"), key=lambda p: p.name)  # deterministic order
+
+    # Caminho rápido: se nenhum arquivo mudou desde o último boot, o manifesto
+    # salvo basta. Nada é importado; o módulo só carrega quando a ferramenta é
+    # chamada de verdade (ver _resolver).
+    cache = boot_cache.carregar(USERDATA_DIR)
+    if cache and _cache_completo(cache, files, reserved):
+        registros: dict[str, ActionRecord] = {}
+        for path in files:
+            if path.name.startswith("_"):
+                continue
+            entrada = cache[path.name]
+            rec = ActionRecord(name=entrada["nome"], description=entrada["descricao"],
+                               parameters=entrada["parametros"], file=path.name,
+                               behavior=entrada.get("behavior"), tier=entrada.get("tier"),
+                               brief=entrada.get("brief"), handler=None,
+                               valid=True)
+            registros[rec.name] = rec
+        registry = ActionRegistry(registros, logger)
+        registry._all_records = list(registros.values())
+        logger(f"Action manifest reused from cache: {len(registros)} tools, no imports.")
+        return registry
     for path in files:
         if path.name.startswith("_"):
             continue
@@ -283,6 +348,8 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
             # Only log a rejection if the file actually tried to be an action.
             logger(f"Action rejected: {path.name} — {rec.error}")
 
+    boot_cache.gravar(USERDATA_DIR, {r.file: boot_cache.entrada_de(actions_dir / r.file, r)
+                                     for r in all_records if r.valid})
     registry = ActionRegistry(valid, logger)
     registry._all_records = all_records
     logger(f"Action discovery complete: {len(valid)} active.")

@@ -73,6 +73,7 @@ import re
 import sys
 import time
 import threading
+from core import circuit
 from pathlib import Path
 from typing import Optional
 
@@ -277,7 +278,14 @@ _gone: set[str] = set()
 _cool_lock = threading.Lock()
 
 
-def _cool(model: str, seconds: float = _COOLDOWN_SECONDS) -> None:
+def _cool(model: str, seconds: float = _COOLDOWN_SECONDS, motivo: str = "") -> None:
+    circuit.registrar_falha(model, motivo or "cooldown")
+    with _cool_lock:
+        _cooldown[model] = time.monotonic() + seconds
+        if seconds >= _GONE_SECONDS:
+            _gone.add(model)
+        else:
+            _gone.discard(model)
     with _cool_lock:
         _cooldown[model] = time.monotonic() + seconds
         if seconds >= _GONE_SECONDS:
@@ -297,6 +305,13 @@ def usable_rungs(ladder) -> list:
     this key is only retried when nothing else is left: the key may have changed.
     """
     ladder = list(ladder)
+    # Disjuntor: modelo cujo provedor vem falhando não é tentado de novo antes
+    # do tempo de espera. Quem não está descansando conta como saudável e fecha
+    # o próprio disjuntor, mantendo as duas visões coerentes.
+    for m in ladder:
+        if not _cooling(m):
+            circuit.registrar_sucesso(m)
+    ladder = [m for m in ladder if circuit.disjuntor(m).permitir()]
     ready = [m for m in ladder if not _cooling(m)]
     if ready:
         # Ordem aprendida do uso real: o degrau que respondeu rápido vai na frente,

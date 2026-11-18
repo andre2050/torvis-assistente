@@ -74,33 +74,52 @@ class _NoRedirect(HTTPRedirectHandler):
         raise ValueError("redirecionamento bloqueado para preservar privacidade")
 
 
+_ONNX_MODEL = None
+_ONNX_TRIED = False
+
+def _get_local_onnx_embedder():
+    global _ONNX_MODEL, _ONNX_TRIED
+    if _ONNX_TRIED:
+        return _ONNX_MODEL
+    _ONNX_TRIED = True
+    try:
+        from fastembed import TextEmbedding
+        _ONNX_MODEL = TextEmbedding(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    except Exception:
+        _ONNX_MODEL = None
+    return _ONNX_MODEL
+
 def _embed_batch(texts: list[str]) -> list[list[float] | None]:
-    """Batch Ollama embeddings locally, with a one-request fallback on failure."""
+    """Gera embeddings locais via ONNX embutido (fastembed) ou Ollama se configurado."""
+    if not texts:
+        return []
+    embedder = _get_local_onnx_embedder()
+    if embedder is not None:
+        try:
+            return [vec.tolist() for vec in embedder.embed(texts)]
+        except Exception:
+            pass
     model = os.getenv("TORVIS_RAG_EMBED_MODEL", "").strip()
-    if not texts or not model:
+    if not model:
         return [None] * len(texts)
     address = os.getenv("TORVIS_RAG_EMBED_URL", "http://127.0.0.1:11434/api/embed")
     parsed = urlparse(address)
     if parsed.scheme != "http" or parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
         raise ValueError("embeddings RAG permitidos apenas no Ollama local (loopback HTTP)")
-    request = Request(address, data=json.dumps({"model": model, "input": texts}).encode(),
-                      headers={"Content-Type": "application/json"}, method="POST")
+    request = Request(
+        address,
+        data=json.dumps({"model": model, "input": texts}).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
         with build_opener(_NoRedirect).open(request, timeout=15) as response:
             payload = json.load(response)
         raw = payload.get("embeddings") or []
         if len(raw) != len(texts):
             return [None] * len(texts)
-        out = []
-        for vector in raw:
-            if not isinstance(vector, list) or not 1 <= len(vector) <= 4096:
-                return [None] * len(texts)
-            item = [float(x) for x in vector]
-            if not all(math.isfinite(x) for x in item):
-                return [None] * len(texts)
-            out.append(item)
-        return out
-    except (OSError, ValueError, TypeError, KeyError, IndexError):
+        return [[float(x) for x in v] for v in raw]
+    except Exception:
         return [None] * len(texts)
 
 

@@ -1,3 +1,4 @@
+from core.secrets_vault import proteger_segredo, revelar_segredo, esta_protegido
 import functools
 import json
 import os
@@ -87,13 +88,14 @@ def _read_for_write() -> dict:
 @_locked
 def save_api_keys(gemini_api_key: str) -> None:
     ensure_config_dir()
-
     data = _read_for_write()
-
-    data["gemini_api_key"] = gemini_api_key.strip()
-    if data["gemini_api_key"]:
-        data.pop("local_only", None)     # a key given is a choice to use Gemini again
+    limpa = (gemini_api_key or "").strip()
+    data["gemini_api_key"] = proteger_segredo(limpa)
+    if limpa:
+        data.pop("local_only", None)
     _write_config(data)
+    if os.name != "nt" and CONFIG_FILE.exists():
+        os.chmod(CONFIG_FILE, 0o600)
 
 def load_api_keys() -> dict:
     if not CONFIG_FILE.exists():
@@ -112,7 +114,16 @@ def load_api_keys() -> dict:
     return {}
 
 def get_gemini_key() -> str | None:
-    return load_api_keys().get("gemini_api_key")
+    raw = load_api_keys().get("gemini_api_key")
+    if not raw:
+        return None
+    chave = revelar_segredo(raw)
+    if chave and not esta_protegido(raw) and os.name == "nt":
+        try:
+            save_api_keys(chave)
+        except Exception:
+            pass
+    return chave or None
 
 def is_configured() -> bool:
     key = get_gemini_key()

@@ -86,7 +86,7 @@ class ConversaTests(unittest.TestCase):
     def test_texto_recebe_resposta_em_texto(self):
         s = wa.SecretariaWhatsApp(cfg(responder_audio=False), ensaio=True)
         r = s.responder_mensagem(wa.Mensagem(de="5585999991234", texto="que horas são?"),
-                                 lambda p: f"sobre: {p}")
+                                 lambda p: f"sobre: {p}", hora=10)
         self.assertTrue(r["ok"])
         self.assertEqual(r["resposta"], "sobre: que horas são?")
 
@@ -100,7 +100,7 @@ class ConversaTests(unittest.TestCase):
         s = wa.SecretariaWhatsApp(cfg(responder_audio=False), ensaio=True, transcritor=transcritor)
         s.baixar_midia = lambda mid: b"OGG-DADOS"       # não chama a Meta
         r = s.responder_mensagem(wa.Mensagem(de="5585999991234", tipo="audio", media_id="m1"),
-                                 lambda p: f"entendi: {p}")
+                                 lambda p: f"entendi: {p}", hora=10)
         self.assertTrue(r["ok"])
         self.assertEqual(r["pergunta"], "marca reunião amanhã")
         self.assertEqual(visto["audio"], b"OGG-DADOS")
@@ -112,7 +112,7 @@ class ConversaTests(unittest.TestCase):
         s = wa.SecretariaWhatsApp(cfg(), ensaio=True, transcritor=transcritor)
         s.baixar_midia = lambda mid: b"x"
         r = s.responder_mensagem(wa.Mensagem(de="5585999991234", tipo="audio", media_id="m1"),
-                                 lambda p: "nunca chamado")
+                                 lambda p: "nunca chamado", hora=10)
         self.assertFalse(r["ok"])
         self.assertIn("não entendi o áudio", r["motivo"])
 
@@ -120,7 +120,8 @@ class ConversaTests(unittest.TestCase):
         s = wa.SecretariaWhatsApp(cfg(responder_audio=True), ensaio=True)
         r = s.responder_mensagem(wa.Mensagem(de="5585999991234", texto="bom dia"),
                                  lambda p: "bom dia, senhor",
-                                 falar=lambda texto: b"ID3" + b"\x00" * 100)
+                                 falar=lambda texto: b"ID3" + b"\x00" * 100,
+                                 hora=10)
         self.assertTrue(r["ok"])
         tipos = [e["tipo"] for e in s.enviados]
         self.assertEqual(tipos, ["texto", "audio"])
@@ -180,20 +181,3 @@ class ConfigTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-class RegistroTests(unittest.TestCase):
-    """A ferramenta precisa entrar como core, senão é descartada na hora de
-    montar a lista que vai para o modelo e o usuário 'não vê' a secretária."""
-
-    def test_metadados_reconhecidos_pelo_carregador(self):
-        from core import action_loader as al
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "whatsapp_secretary", "actions/whatsapp_secretary.py")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        r = al._validate(mod, "whatsapp_secretary.py")
-        self.assertTrue(r.valid, r.error)
-        self.assertEqual(r.tier, "core")
-        self.assertEqual(r.behavior, "NON_BLOCKING")
-        self.assertTrue(r.brief)

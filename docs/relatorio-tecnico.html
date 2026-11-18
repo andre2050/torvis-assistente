@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Relatório técnico</title>
+<style>
+  :root { --tinta: #10161c; --suave: #5d6b78; --linha: #dce3ea; --realce: #0b6b8f; }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; padding: 56px 40px 80px; max-width: 820px;
+         font: 16px/1.65 -apple-system, "Segoe UI", Roboto, sans-serif;
+         color: var(--tinta); background: #fff; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -.4px; }
+  .sub { color: var(--suave); margin: 0 0 34px; font-size: 14px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1.2px;
+        color: var(--realce); margin: 38px 0 10px; padding-bottom: 6px;
+        border-bottom: 1px solid var(--linha); }
+  p { margin: 0 0 14px; }
+  ul { margin: 0 0 16px; padding-left: 20px; }
+  li { margin-bottom: 7px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 20px; font-size: 14px; }
+  th { text-align: left; font-weight: 600; color: var(--suave);
+        border-bottom: 1px solid var(--linha); padding: 8px 10px; }
+  td { border-bottom: 1px solid var(--linha); padding: 8px 10px; vertical-align: top; }
+  tbody tr:nth-child(even) { background: #f6f8fa; }
+  @media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; }
+                  table { break-inside: auto; } }
+</style>
+</head>
+<body>
+<h1>Assistente Inteligente T.O.R.V.I.S 2026</h1>
+<p class='sub'>Relatório técnico · versão 6.7.0 · 17/11/2026 12:35</p>
+<h2>1. Objetivo</h2>
+<p>Este documento descreve um assistente pessoal de voz executado no computador do próprio usuário: ele escuta, responde em voz alta, executa tarefas no sistema e mantém memória entre sessões. O diferencial não é conversar — é agir: abrir programas, controlar arquivos, pesquisar na web, acompanhar telas e automatizar rotinas com confirmação humana nas ações irreversíveis.</p>
+<h2>2. Arquitetura</h2>
+<p>A separação é por responsabilidade: o núcleo não desenha, a interface não decide, e as ferramentas não sabem quem as chamou. A conversa ao vivo é o caminho padrão; um motor alternativo pode substituir escuta, raciocínio e fala sem tocar no resto do sistema.</p>
+<table><thead><tr><th>Pacote</th><th>Linhas</th><th>O que faz</th></tr></thead><tbody><tr><td>core</td><td>22.467</td><td>núcleo: estado, modelos, rede, atualização, políticas e relatórios</td></tr><tr><td>actions</td><td>16.780</td><td>ferramentas que o assistente executa por comando de voz ou texto</td></tr><tr><td>gui</td><td>11.013</td><td>interface: HUD, painéis, temas e os 9 HUBs do avatar</td></tr><tr><td>providers</td><td>5.905</td><td>motor plugável de escuta, raciocínio e fala</td></tr><tr><td>raiz</td><td>4.158</td><td>módulo de apoio</td></tr><tr><td>tests</td><td>3.898</td><td>suíte automatizada de testes</td></tr><tr><td>memory</td><td>1.371</td><td>memória de longo prazo, memória cognitiva e configuração</td></tr><tr><td>dashboard</td><td>1.320</td><td>painel web local para acompanhar o assistente</td></tr><tr><td>tools</td><td>961</td><td>scripts de empacotamento, render e aplicação de atualização</td></tr><tr><td>neural</td><td>578</td><td>módulos neurais opcionais (classificador, visão, sequência)</td></tr><tr><td>plugins</td><td>66</td><td>extensões carregadas em tempo de execução</td></tr><tr><td>config</td><td>28</td><td>módulo de apoio</td></tr></tbody></table>
+<h2>3. Números do projeto</h2>
+<table><thead><tr><th>Indicador</th><th>Valor</th></tr></thead><tbody><tr><td>Módulos Python</td><td>197</td></tr><tr><td>Linhas de código Python</td><td>68.545</td></tr><tr><td>Arquivos de teste</td><td>37</td></tr><tr><td>Documentos técnicos</td><td>58</td></tr><tr><td>Total de arquivos</td><td>293</td></tr><tr><td>Python</td><td>3.12.8</td></tr></tbody></table>
+<h2>4. Metodologia</h2>
+<p>O desenvolvimento foi incremental e verificado: cada versão só é publicada depois de a suíte automatizada passar, e as atualizações chegam ao usuário por pacote assinado com SHA-256, aplicado de forma atômica e com rollback automático em caso de falha. Arquivos de chave, memória e configuração nunca são sobrescritos.</p>
+<ul><li>Testes automatizados por módulo, executados fora da interface.</li><li>Diagnóstico embutido: rede, modelos, dependências e erros num arquivo só.</li><li>Métricas de desempenho gravadas em cada abertura.</li><li>Atualização verificada por hash, com o sistema antigo preservado até a troca.</li></ul>
+<h2>5. Cronologia</h2>
+<table><thead><tr><th>Versão</th><th>Entrega</th></tr></thead><tbody><tr><td>v5.x</td><td>HUBs visuais, memória cognitiva, visão computacional e agentes</td></tr><tr><td>v6.0</td><td>núcleo I.S.A., política de execução, orçamento e diagnóstico</td></tr><tr><td>v6.1</td><td>HUBs realistas, relatório de um clique e métricas de desempenho</td></tr><tr><td>v6.2</td><td>atualização atômica com rollback e proteção de chaves</td></tr><tr><td>v6.3</td><td>atualização automática em segundo plano</td></tr><tr><td>v6.4</td><td>conjunto de ajuste fino e relatório de capstone</td></tr></tbody></table>
+<h2>6. Limitações declaradas</h2>
+<ul><li>O ajuste fino não altera a conversa ao vivo: ele troca o modelo de texto usado nas tarefas escritas.</li><li>Nenhum método prevê sorteios ou eventos aleatórios; as decisões do assistente são apoio, não garantia.</li><li>A suíte cobre a lógica; microfone, tela e voz dependem de teste manual no Windows.</li><li>A latência percebida depende da rede e do provedor, não só do código.</li></ul>
+<h2>7. Trabalhos futuros</h2>
+<ul><li>Testes com mocks para microfone, SAPI e captura de tela, hoje só validados à mão.</li><li>Divisão de window.py e main.py por HUB, para reduzir o custo de cada correção.</li><li>Watchdog da sessão ao vivo, com reconexão automática e estado visível.</li><li>Trilha de auditoria das ações autônomas, com desfazer para o que é reversível.</li></ul>
+</body>
+</html>

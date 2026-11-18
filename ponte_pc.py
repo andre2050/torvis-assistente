@@ -1,3 +1,30 @@
+
+import threading
+
+_tentativas_falhas: dict[str, list[float]] = {}
+_lock_auth = threading.Lock()
+MAX_TENTATIVAS = 5
+JANELA_BLOQUEIO = 600.0  # 10 minutos
+
+
+def _ip_bloqueado(ip: str) -> bool:
+    agora = time.time()
+    with _lock_auth:
+        historico = [t for t in _tentativas_falhas.get(ip, []) if agora - t < JANELA_BLOQUEIO]
+        _tentativas_falhas[ip] = historico
+        return len(historico) >= MAX_TENTATIVAS
+
+
+def _registrar_falha(ip: str) -> None:
+    with _lock_auth:
+        _tentativas_falhas.setdefault(ip, []).append(time.time())
+
+
+def _limpar_falhas(ip: str) -> None:
+    with _lock_auth:
+        _tentativas_falhas.pop(ip, None)
+
+
 #!/usr/bin/env python3
 """Ponte do TORVIS — o celular manda, o PC executa.
 
@@ -206,10 +233,17 @@ class Atendente(BaseHTTPRequestHandler):
             self._responder(404, {"ok": False, "erro": "caminho desconhecido"})
             return
 
+        cliente_ip = self.client_address[0]
+        if _ip_bloqueado(cliente_ip):
+            self._responder(429, {"ok": False, "erro": "muitas tentativas; aguarde 10 minutos"})
+            return
+
         enviado = (self.headers.get("X-Codigo") or "").strip()
         if not secrets.compare_digest(enviado, CODIGO):
+            _registrar_falha(cliente_ip)
             self._responder(401, {"ok": False, "erro": "código errado"})
             return
+        _limpar_falhas(cliente_ip)
 
         tamanho = int(self.headers.get("Content-Length") or 0)
         if tamanho > 4096:

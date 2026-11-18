@@ -1,8 +1,8 @@
 {
-  "version": "6.6.9",
-  "channel": "stable",
-  "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-Assistente-v6.6.9.zip",
-  "sha256": "8269a4fbe3b5e6759fd45b58b1452d38756672e01beeeeb220d450027f060f7f",
-  "apk": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-2026-v6.6.9.apk",
-  "notes": "Escrita segura no agente de codigo: nao grava resposta cortada, troca de modelo quando a cota estoura e explica o que falhou."
+    "version": "7.0.0",
+    "channel": "stable",
+    "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-Assistente-v6.6.9.zip",
+    "sha256": "8269a4fbe3b5e6759fd45b58b1452d38756672e01beeeeb220d450027f060f7f",
+    "apk": "https://github.com/andre2050/torvis-assistente/releases/download/v6.6.9/TORVIS-2026-v6.6.9.apk",
+    "notes": "TORVIS v7.0.0: Cofre de segredos DPAPI, prote\u00e7\u00e3o contra for\u00e7a bruta na ponte PC, RAG com embeddings ONNX locais e CI GitHub Actions."
 }

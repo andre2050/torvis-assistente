@@ -39,10 +39,50 @@ class NucleoISA:
         self.agente_autonomo = AgenteAutonomo()
         from core.adaptive_intelligence import obter_adaptativo
         self.adaptativo = obter_adaptativo()
+        from core.raciocinio import CatalogoFerramentas
+        self.catalogo = CatalogoFerramentas()
+        self._raciocinio = None
 
-    def registrar_ferramenta(self, nome: str, funcao: Callable[..., Any]):
+    def registrar_ferramenta(self, nome: str, funcao: Callable[..., Any], descricao: str = "",
+                             parametros: Optional[dict] = None, custo_erro: Optional[str] = None,
+                             reversivel: bool = True):
         if not nome or not callable(funcao): raise ValueError("Ferramenta inválida.")
         self._ferramentas[nome]=funcao
+        # Descrição, parâmetros e custo do erro são o que o agente lê para escolher bem a ferramenta.
+        self.catalogo.registrar(nome, descricao, parametros, custo_erro, reversivel)
+
+    def carregar_catalogo(self, declaracoes) -> int:
+        """Descreve ferramentas já existentes (declarações do ActionRegistry) ao agente."""
+        return self.catalogo.carregar_declaracoes(declaracoes)
+
+    def ligar_registro_de_acoes(self, registro, ctx: Optional[dict] = None, ignorar=()) -> int:
+        """Torna as ferramentas do ActionRegistry executáveis (e descritas) pelo ciclo de raciocínio."""
+        n = 0
+        pular = {"smart_agent", "autonomous_planner", *ignorar}
+        for decl in registro.get_tool_declarations():
+            nome = decl.get("name")
+            if not nome or nome in pular:
+                continue
+            def _chamar(_nome=nome, **kw):
+                return registro.run(_nome, kw, ctx or {})
+            self.registrar_ferramenta(nome, _chamar, decl.get("description") or decl.get("brief") or "",
+                                      decl.get("parameters") or {})
+            n += 1
+        return n
+
+    @property
+    def raciocinio(self):
+        if self._raciocinio is None:
+            from core.raciocinio import CicloRaciocinio
+            self._raciocinio = CicloRaciocinio(self, memoria=self.memoria_cognitiva)
+        return self._raciocinio
+
+    def processar_pedido(self, texto: str, *, ask_fn=None) -> dict:
+        """Pedido em linguagem natural → intenção → decisão → plano → ação → verificação."""
+        ciclo = self.raciocinio
+        if ask_fn is not None:
+            ciclo.ask_fn = ask_fn
+        return ciclo.processar(texto)
 
     def interpretar(self, texto: str):
         limpo=(texto or "").strip(); baixo=limpo.casefold()
@@ -56,7 +96,7 @@ class NucleoISA:
     def _assinatura(self,nome,args):
         return sha256(f"{nome}|{repr(sorted(args.items()))}".encode("utf-8",errors="replace")).hexdigest()
 
-    def executar(self,nome,**argumentos):
+    def executar(self,nome,/,**argumentos):
         if nome not in self._ferramentas:
             return ISAResultado(bloqueado=True,motivo=f"Ferramenta não registrada: {nome}")
         sig=self._assinatura(nome,argumentos)
@@ -108,6 +148,7 @@ class NucleoISA:
                 "eventos_contexto":len(self.historico),"tempo_ativo_s":round(monotonic()-self.iniciado_em,2), "neural":self.neural.status(),
                 "memoria_cognitiva":self.memoria_cognitiva.status(),
                 "agente_autonomo":self.agente_autonomo.status(),
+                "raciocinio":self.raciocinio.status(),
                 "inteligencia_adaptativa":self.adaptativo.status(),
                 "rag":self._estado_rag()}
 

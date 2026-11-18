@@ -9,11 +9,13 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+import threading
 from threading import RLock
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 import json
 import math
 import re
+import time
 import uuid
 
 from core.paths import MEMORY_DIR
@@ -45,6 +47,54 @@ class Lembranca:
 
     def como_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+_PENDENTES: dict = {}
+_TRAVA_GRAVACAO = RLock()
+_ESCRITOR = None
+_INTERVALO_GRAVACAO = 0.8
+
+
+def _agendar_gravacao(caminho, dados) -> None:
+    """Marca o arquivo como sujo; um escritor único despeja em lote."""
+    global _ESCRITOR
+    with _TRAVA_GRAVACAO:
+        _PENDENTES[caminho] = dados
+        if _ESCRITOR is None or not _ESCRITOR.is_alive():
+            _ESCRITOR = threading.Thread(target=_laco_gravacao, name="memoria-disco",
+                                         daemon=True)
+            _ESCRITOR.start()
+
+
+def _laco_gravacao(intervalo: float = _INTERVALO_GRAVACAO) -> None:
+    while True:
+        time.sleep(intervalo)
+        with _TRAVA_GRAVACAO:
+            lote = dict(_PENDENTES)
+            _PENDENTES.clear()
+        if not lote:
+            continue
+        for caminho, dados in lote.items():
+            try:
+                caminho.parent.mkdir(parents=True, exist_ok=True)
+                tmp = caminho.with_suffix(caminho.suffix + ".tmp")
+                tmp.write_text(json.dumps(dados, ensure_ascii=False, indent=2),
+                               encoding="utf-8")
+                tmp.replace(caminho)
+            except OSError:
+                with _TRAVA_GRAVACAO:
+                    _PENDENTES[caminho] = dados
+
+
+def descarregar_memoria(segundos: float = 3.0) -> bool:
+    """Força a gravação pendente e espera. Usado ao fechar o aplicativo."""
+    limite = time.time() + segundos
+    while time.time() < limite:
+        with _TRAVA_GRAVACAO:
+            if not _PENDENTES:
+                return True
+        time.sleep(0.05)
+    return False
 
 
 class MemoriaCognitiva:
@@ -83,11 +133,15 @@ class MemoriaCognitiva:
             return []
 
     def _salvar(self, itens: Iterable[Lembranca]) -> None:
-        self.caminho.parent.mkdir(parents=True, exist_ok=True)
+        """RAM na frente; disco depois, agrupado.
+
+        O usuário não espera o disco para o assistente lembrar. A lista viva fica
+        em memória e um escritor único junta as gravações próximas numa só, o que
+        evita dezenas de reescritas quando ele dita várias lembranças seguidas.
+        """
         dados = [x.como_dict() for x in itens]
-        tmp = self.caminho.with_suffix(self.caminho.suffix + ".tmp")
-        tmp.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
-        tmp.replace(self.caminho)
+        self._em_ram = dados
+        _agendar_gravacao(self.caminho, dados)
 
     @staticmethod
     def _normalizar_importancia(valor: float) -> float:

@@ -126,7 +126,7 @@ TOOL = {
         "required": ["action"],
     },
     "handler": whatsapp_secretary,
-    "behavior": "NON_BLOCKING",
-    "tier": "core",
+    "behavior": "WRITE",
+    "tier": "SMART",
     "brief": "Atende WhatsApp: responde texto e áudio, avisa quem ligou e não foi atendido.",
 }
