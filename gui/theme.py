@@ -128,11 +128,10 @@ class C:
 
 
 # Keys tied to the accent colour — status colours (ACC, GREEN, RED…) stay fixed
-_HUE_LINKED = (
-    "BG", "PANEL", "PANEL2", "BORDER", "BORDER_B", "BORDER_A",
-    "PRI", "PRI_DIM", "PRI_GHO", "TEXT", "TEXT_DIM", "TEXT_MED",
-    "WHITE", "DARK", "BAR_BG",
-)
+# Only the accent family follows the user's colour. The neutral base and the
+# type stay put: re-deriving them painted the whole window in the accent's hue,
+# which is exactly what erased the Minimal Pro look on the first start.
+_HUE_LINKED = ("PRI", "PRI_DIM", "PRI_GHO")
 _PALETTE_DEFAULTS: dict[str, str] = {k: getattr(C, k) for k in _HUE_LINKED}
 
 DEFAULT_UI_COLOR = _PALETTE_DEFAULTS["PRI"]

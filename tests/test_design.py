@@ -22,6 +22,18 @@ class DesignTests(unittest.TestCase):
         razao = (max(a, b) + 0.05) / (min(a, b) + 0.05)
         self.assertGreater(razao, 7.0, f"contraste baixo: {razao:.1f}:1")
 
+    def test_acento_salvo_nao_reescreve_a_base(self):
+        """A cor guardada na config repintava a janela inteira no tom do acento."""
+        from gui.theme import apply_ui_accent
+        base, texto, acento = C.BG, C.TEXT, C.PRI
+        apply_ui_accent("#00d4ff")
+        try:
+            self.assertEqual(C.BG, base)
+            self.assertEqual(C.TEXT, texto)
+            self.assertNotEqual(C.PRI, acento)
+        finally:
+            apply_ui_accent(base if False else acento)
+
     def test_escala_de_espaco_crescente(self):
         self.assertEqual(list(design.ESPACO), sorted(design.ESPACO))
         self.assertGreater(design.RAIO, 0)
