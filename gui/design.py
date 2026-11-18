@@ -112,7 +112,56 @@ def qss() -> str:
     QPushButton:hover {{ border-color: {C.BORDER_B}; color: {C.WHITE}; }}
     QPushButton:pressed {{ background: {C.PRI_GHO}; border-color: {C.PRI}; }}
     QPushButton:disabled {{ color: {C.TEXT_DIM}; border-color: {C.BORDER}; }}
+
+    QSlider::groove:horizontal {{
+        background: {C.PANEL2};
+        border: 1px solid {C.BORDER};
+        border-radius: 4px;
+        height: 6px;
+    }}
+    QSlider::sub-page:horizontal {{ background: {C.PRI_DIM}; border-radius: 3px; }}
+    QSlider::handle:horizontal {{
+        background: {C.WHITE};
+        border: 2px solid {C.PANEL};
+        width: 14px; height: 14px;
+        margin: -6px 0;
+        border-radius: 8px;
+    }}
+    QSlider::handle:horizontal:hover {{ background: {C.PRI}; }}
+
+    QTabWidget::pane {{
+        border: 1px solid {C.BORDER};
+        border-radius: {RAIO}px;
+        top: -1px;
+        background: {C.PANEL};
+    }}
+    QTabBar::tab {{
+        background: transparent;
+        color: {C.TEXT_DIM};
+        border: none;
+        padding: 7px 14px;
+        margin-right: 4px;
+        border-bottom: 2px solid transparent;
+    }}
+    QTabBar::tab:selected {{ color: {C.WHITE}; border-bottom: 2px solid {C.PRI}; }}
+    QTabBar::tab:hover {{ color: {C.TEXT}; }}
+
+    QListWidget, QTreeWidget, QTableWidget {{
+        background: {C.PANEL};
+        color: {C.TEXT};
+        border: 1px solid {C.BORDER};
+        border-radius: {RAIO}px;
+        padding: 4px;
+    }}
+    QListWidget::item {{ padding: 7px 9px; border-radius: 7px; }}
+    QListWidget::item:selected {{ background: {C.PRI_GHO}; color: {C.WHITE}; }}
+    QListWidget::item:hover {{ background: {C.PANEL2}; }}
+
+    QScrollArea {{ background: transparent; border: none; }}
+    QSplitter::handle {{ background: {C.BORDER}; }}
+    QSplitter::handle:hover {{ background: {C.BORDER_B}; }}
     """
+
 
 
 def apply(app: QApplication | None = None) -> None:

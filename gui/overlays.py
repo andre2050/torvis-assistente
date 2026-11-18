@@ -40,7 +40,7 @@ from gui.theme import (
     qcol,
 )
 
-from gui.style import hud_font
+from gui.style import hud_font, px_font, mono_font, btn_css
 from core.version import VERSAO
 
 
@@ -53,9 +53,9 @@ class SetupOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
             SetupOverlay {{
-                background: rgba(0, 6, 10, 245);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                background: {C.PANEL};
+                border: 1px solid {C.BORDER};
+                border-radius: 14px;
             }}
         """)
 
@@ -95,7 +95,7 @@ class SetupOverlay(QWidget):
         self._key_input.setStyleSheet(f"""
             QLineEdit {{
                 background: #151c25; color: {C.TEXT};
-                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px;
+                border: 1px solid {C.BORDER}; border-radius: 10px; padding: 4px 8px;
             }}
             QLineEdit:focus {{ border: 1px solid {C.PRI}; }}
         """)
@@ -133,7 +133,7 @@ class SetupOverlay(QWidget):
         init_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.PRI};
-                border: 1px solid {C.PRI_DIM}; border-radius: 3px;
+                border: 1px solid {C.PRI_DIM}; border-radius: 10px;
             }}
             QPushButton:hover {{
                 background: {C.PRI_GHO}; border: 1px solid {C.PRI};
@@ -149,8 +149,8 @@ class SetupOverlay(QWidget):
             QPushButton {{
                 color: {C.ACC2};
                 background: rgba(0, 18, 26, 210);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 4px;
+                border: 1px solid {C.BORDER};
+                border-radius: 8px;
                 font-weight: bold;
                 letter-spacing: 1px;
             }}
@@ -172,9 +172,9 @@ class SetupOverlay(QWidget):
         local_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.TEXT_DIM};
-                border: 1px solid {C.BORDER}; border-radius: 3px;
+                border: 1px solid {C.BORDER}; border-radius: 10px;
             }}
-            QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER_B}; }}
+            QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER}; }}
         """)
         local_btn.clicked.connect(lambda: self.done.emit("", self._sel_os))
         layout.addWidget(local_btn)
@@ -188,16 +188,16 @@ class SetupOverlay(QWidget):
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background: {fg}; color: {bg};
-                        border: none; border-radius: 3px; font-weight: bold;
+                        border: none; border-radius: 10px; font-weight: bold;
                     }}
                 """)
             else:
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background: #151c25; color: {C.TEXT_DIM};
-                        border: 1px solid {C.BORDER}; border-radius: 3px;
+                        border: 1px solid {C.BORDER}; border-radius: 10px;
                     }}
-                    QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER_B}; }}
+                    QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER}; }}
                 """)
 
     def _submit(self):
@@ -317,16 +317,16 @@ class CustomizeOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
             CustomizeOverlay {{
-                background: rgba(0, 6, 10, 245);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                background: {C.PANEL};
+                border: 1px solid {C.BORDER};
+                border-radius: 14px;
             }}
         """)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(24, 18, 24, 18)
         lay.setSpacing(8)
 
-        def _lbl(txt, fs=9, bold=False, color=C.PRI, align=Qt.AlignmentFlag.AlignCenter):
+        def _lbl(txt, fs=9, bold=False, color=C.TEXT_DIM, align=Qt.AlignmentFlag.AlignCenter):
             w = QLabel(txt); w.setAlignment(align)
             w.setFont(hud_font(fs,
                             QFont.Weight.Bold if bold else QFont.Weight.Normal))
@@ -334,12 +334,13 @@ class CustomizeOverlay(QWidget):
             return w
 
         _fs = (f"QLineEdit {{ background: #151c25; color: {C.TEXT}; "
-               f"border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px; }}"
+               f"border: 1px solid {C.BORDER}; border-radius: 10px; padding: 4px 8px; }}"
                f"QLineEdit:focus {{ border: 1px solid {C.PRI}; }}")
 
-        lay.addWidget(_lbl("⚙  CUSTOMISE ASSISTANT", 12, True))
+        lay.addWidget(_lbl("CUSTOMISE ASSISTANT", 11, True, color=C.WHITE,
+                            align=Qt.AlignmentFlag.AlignLeft))
         sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet(f"color: {C.BORDER}; margin: 2px 0;")
+        sep.setStyleSheet(f"color: {C.BORDER}; margin: 6px 0; border: none; height: 1px;")
         lay.addWidget(sep)
 
         lay.addWidget(_lbl("ASSISTANT NAME", 8, color=C.TEXT_DIM,
@@ -397,7 +398,7 @@ class CustomizeOverlay(QWidget):
         df_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px;
+                border: 1px solid {C.BORDER}; border-radius: 10px;
             }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
@@ -434,7 +435,7 @@ class CustomizeOverlay(QWidget):
         save_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.PRI};
-                border: 1px solid {C.PRI_DIM}; border-radius: 3px;
+                border: 1px solid {C.PRI_DIM}; border-radius: 10px;
             }}
             QPushButton:hover {{ background: {C.PRI_GHO}; border: 1px solid {C.PRI}; }}
         """)
@@ -448,7 +449,7 @@ class CustomizeOverlay(QWidget):
         cancel_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px;
+                border: 1px solid {C.BORDER}; border-radius: 10px;
             }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
@@ -469,12 +470,12 @@ class CustomizeOverlay(QWidget):
             if on:
                 b.setStyleSheet(f"""
                     QPushButton {{ background: {C.PRI_GHO}; color: {C.PRI};
-                        border: 1px solid {C.PRI}; border-radius: 3px; }}
+                        border: 1px solid {C.PRI}; border-radius: 10px; }}
                 """)
             else:
                 b.setStyleSheet(f"""
                     QPushButton {{ background: transparent; color: {C.TEXT_MED};
-                        border: 1px solid {C.BORDER}; border-radius: 3px; }}
+                        border: 1px solid {C.BORDER}; border-radius: 10px; }}
                     QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
                 """)
 
@@ -523,6 +524,76 @@ class CustomizeOverlay(QWidget):
         self.hide()
 
 
+class NucleoIsaOverlay(QWidget):
+    """O núcleo I.S.A. à vista: o que ele é, com que motor está falando e como
+    trocar a chave. Antes isso só aparecia na primeira execução, quando ainda
+    faltava credencial — quem já tinha chave nunca mais via o nome do núcleo."""
+
+    _OW, _OH = 420, 300
+    abrir_setup = pyqtSignal()
+
+    def __init__(self, dados: dict, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setStyleSheet(f"""
+            NucleoIsaOverlay {{
+                background: {C.PANEL};
+                border: 1px solid {C.BORDER};
+                border-radius: 14px;
+            }}
+        """)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(24, 20, 24, 18)
+        lay.setSpacing(10)
+
+        titulo = QLabel("NÚCLEO I.S.A.")
+        titulo.setFont(px_font(12, QFont.Weight.Bold, spacing=2.0))
+        titulo.setStyleSheet(f"color: {C.WHITE}; background: transparent;")
+        lay.addWidget(titulo)
+
+        sub = QLabel("Inteligência · Síntese · Ação")
+        sub.setFont(px_font(10, QFont.Weight.Normal, spacing=1.2))
+        sub.setStyleSheet(f"color: {C.TEXT_DIM}; background: transparent;")
+        lay.addWidget(sub)
+
+        sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet(f"color: {C.BORDER}; border: none; height: 1px; margin: 4px 0;")
+        lay.addWidget(sep)
+
+        for rotulo, chave in (("VERSÃO", "versao"), ("MOTOR", "motor"),
+                              ("VOZ", "voz"), ("ESTADO", "estado")):
+            linha = QHBoxLayout()
+            linha.setSpacing(8)
+            nome = QLabel(rotulo)
+            nome.setFont(px_font(9, QFont.Weight.DemiBold, spacing=1.4))
+            nome.setStyleSheet(f"color: {C.TEXT_DIM}; background: transparent;")
+            valor = QLabel(str(dados.get(chave) or "—"))
+            valor.setFont(mono_font(10) if chave == "versao" else hud_font(10))
+            valor.setStyleSheet(f"color: {C.TEXT}; background: transparent;")
+            valor.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            linha.addWidget(nome)
+            linha.addStretch(1)
+            linha.addWidget(valor)
+            lay.addLayout(linha)
+
+        lay.addSpacing(6)
+        acoes = QHBoxLayout()
+        acoes.setSpacing(8)
+        chave = QPushButton("TROCAR CHAVE")
+        chave.setFixedHeight(32)
+        chave.setCursor(Qt.CursorShape.PointingHandCursor)
+        chave.setStyleSheet(btn_css("dim"))
+        chave.clicked.connect(self.abrir_setup.emit)
+        fechar = QPushButton("FECHAR")
+        fechar.setFixedHeight(32)
+        fechar.setCursor(Qt.CursorShape.PointingHandCursor)
+        fechar.setStyleSheet(btn_css("primary"))
+        fechar.clicked.connect(self.hide)
+        acoes.addWidget(chave)
+        acoes.addWidget(fechar)
+        lay.addLayout(acoes)
+
+
 class PluginManagerOverlay(QWidget):
     """Floating overlay — lists discovered plugins with per-plugin ATIVADO/DESATIVADO toggles."""
 
@@ -533,9 +604,9 @@ class PluginManagerOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
             PluginManagerOverlay {{
-                background: rgba(0, 6, 10, 245);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                background: {C.PANEL};
+                border: 1px solid {C.BORDER};
+                border-radius: 14px;
             }}
         """)
         self.setFixedWidth(self._OW)
@@ -544,9 +615,9 @@ class PluginManagerOverlay(QWidget):
         lay.setContentsMargins(20, 16, 20, 16)
         lay.setSpacing(6)
 
-        hdr = QLabel("🧩  GERENCIADOR DE PLUGINS")
-        hdr.setFont(hud_font(12, QFont.Weight.Bold))
-        hdr.setStyleSheet(f"color: {C.PRI}; background: transparent;")
+        hdr = QLabel("GERENCIADOR DE PLUGINS")
+        hdr.setFont(hud_font(11, QFont.Weight.Bold))
+        hdr.setStyleSheet(f"color: {C.WHITE}; background: transparent;")
         lay.addWidget(hdr)
         sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine)
         sep.setStyleSheet(f"color: {C.BORDER}; margin: 2px 0;")
@@ -569,7 +640,7 @@ class PluginManagerOverlay(QWidget):
         close_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px;
+                border: 1px solid {C.BORDER}; border-radius: 10px;
             }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
@@ -597,7 +668,7 @@ class PluginManagerOverlay(QWidget):
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background: transparent; color: {C.TEXT_DIM};
-                    border: 1px solid {C.BORDER}; border-radius: 3px;
+                    border: 1px solid {C.BORDER}; border-radius: 10px;
                 }}
             """)
         else:
@@ -613,7 +684,7 @@ class PluginManagerOverlay(QWidget):
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background: #10222e; color: {C.GREEN};
-                    border: 1px solid {C.GREEN_D}; border-radius: 3px;
+                    border: 1px solid {C.GREEN_D}; border-radius: 10px;
                 }}
                 QPushButton:hover {{ background: #002010; }}
             """)
@@ -622,7 +693,7 @@ class PluginManagerOverlay(QWidget):
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background: transparent; color: {C.TEXT_DIM};
-                    border: 1px solid {C.BORDER}; border-radius: 3px;
+                    border: 1px solid {C.BORDER}; border-radius: 10px;
                 }}
                 QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
             """)
@@ -676,7 +747,7 @@ class ConfirmBanner(_HudOverlay):
             ConfirmBanner {{
                 background: rgba(14, 3, 0, 250);
                 border: 1px solid {C.ACC};
-                border-radius: 6px;
+                border-radius: 10px;
             }}
         """)
         self.setFixedWidth(self._OW)
@@ -711,7 +782,7 @@ class ConfirmBanner(_HudOverlay):
         yes.setCursor(Qt.CursorShape.PointingHandCursor)
         yes.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {C.ACC};
-                border: 1px solid {C.ACC}; border-radius: 3px; }}
+                border: 1px solid {C.ACC}; border-radius: 10px; }}
             QPushButton:hover {{ background: rgba(255,107,0,40); }}
         """)
         yes.clicked.connect(lambda: self.answered.emit(True))
@@ -723,7 +794,7 @@ class ConfirmBanner(_HudOverlay):
         no.setCursor(Qt.CursorShape.PointingHandCursor)
         no.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px; }}
+                border: 1px solid {C.BORDER}; border-radius: 10px; }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
         no.clicked.connect(lambda: self.answered.emit(False))
@@ -772,9 +843,9 @@ class AudioDeviceOverlay(_HudOverlay):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
             AudioDeviceOverlay {{
-                background: rgba(0, 6, 10, 245);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                background: {C.PANEL};
+                border: 1px solid {C.BORDER};
+                border-radius: 14px;
             }}
         """)
         self.setFixedWidth(self._OW)
@@ -794,7 +865,7 @@ class AudioDeviceOverlay(_HudOverlay):
 
         _combo_css = (
             f"QComboBox {{ background: #151c25; color: {C.TEXT}; "
-            f"border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px; }}"
+            f"border: 1px solid {C.BORDER}; border-radius: 10px; padding: 4px 8px; }}"
             f"QComboBox:hover {{ border-color: {C.BORDER_B}; }}"
             f"QComboBox QAbstractItemView {{ background: #151c25; color: {C.TEXT}; "
             f"selection-background-color: {C.PRI_GHO}; border: 1px solid {C.BORDER}; }}"
@@ -802,7 +873,7 @@ class AudioDeviceOverlay(_HudOverlay):
 
         _test_css = (
             f"QPushButton {{ background: transparent; color: {C.TEXT_DIM}; "
-            f"border: 1px solid {C.BORDER}; border-radius: 3px; }}"
+            f"border: 1px solid {C.BORDER}; border-radius: 10px; }}"
             f"QPushButton:hover {{ color: {C.PRI}; border-color: {C.PRI_DIM}; }}"
             f"QPushButton:disabled {{ color: {C.BORDER}; }}"
         )
@@ -864,7 +935,7 @@ class AudioDeviceOverlay(_HudOverlay):
             meter.setFixedHeight(6)
             meter.setStyleSheet(
                 f"QProgressBar {{ background: #151c25; border: 1px solid {C.BORDER}; "
-                f"border-radius: 3px; }}"
+                f"border-radius: 10px; }}"
                 f"QProgressBar::chunk {{ background: {C.PRI}; border-radius: 2px; }}")
             meter.hide()
             lay.addWidget(meter)
@@ -928,7 +999,7 @@ class AudioDeviceOverlay(_HudOverlay):
                 f"QSlider::sub-page:horizontal {{ background: {C.PRI_DIM}; "
                 f"border-radius: 2px; }}"
                 f"QSlider::handle:horizontal {{ background: {C.PRI}; width: 10px; "
-                f"margin: -5px 0; border-radius: 5px; }}")
+                f"margin: -5px 0; border-radius: 8px; }}")
             self._vol_lbl = QLabel(f"{int(_vol_now)}%")
             self._vol_lbl.setFont(hud_font(8))
             self._vol_lbl.setFixedWidth(40)
@@ -961,7 +1032,7 @@ class AudioDeviceOverlay(_HudOverlay):
         ok.setCursor(Qt.CursorShape.PointingHandCursor)
         ok.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {C.PRI};
-                border: 1px solid {C.PRI_DIM}; border-radius: 3px; }}
+                border: 1px solid {C.PRI_DIM}; border-radius: 10px; }}
             QPushButton:hover {{ background: {C.PRI_GHO}; border-color: {C.PRI}; }}
         """)
         ok.clicked.connect(self._apply)
@@ -973,7 +1044,7 @@ class AudioDeviceOverlay(_HudOverlay):
         cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         cancel.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px; }}
+                border: 1px solid {C.BORDER}; border-radius: 10px; }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
         cancel.clicked.connect(self.hide)
@@ -1112,8 +1183,8 @@ class MemoryOverlay(_HudOverlay):
         self.setStyleSheet(f"""
             MemoryOverlay {{
                 background: rgba(0, 6, 10, 246);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                border: 1px solid {C.BORDER};
+                border-radius: 10px;
             }}
         """)
         self.setFixedWidth(self._OW)
@@ -1220,7 +1291,7 @@ class MemoryOverlay(_HudOverlay):
             scroll.setWidgetResizable(True)
             scroll.setFixedHeight(min(420, 34 * len(rows) + 10))
             scroll.setStyleSheet(
-                f"QScrollArea {{ border: 1px solid {C.BORDER}; border-radius: 3px; "
+                f"QScrollArea {{ border: 1px solid {C.BORDER}; border-radius: 10px; "
                 f"background: transparent; }}"
             )
             inner = QWidget()
@@ -1249,7 +1320,7 @@ class MemoryOverlay(_HudOverlay):
                 rm.setToolTip("Forget this")
                 rm.setStyleSheet(f"""
                     QPushButton {{ background: transparent; color: {C.TEXT_DIM};
-                        border: 1px solid {C.BORDER}; border-radius: 3px; }}
+                        border: 1px solid {C.BORDER}; border-radius: 10px; }}
                     QPushButton:hover {{ color: {C.RED}; border-color: {C.RED}; }}
                 """)
                 rm.clicked.connect(
@@ -1270,7 +1341,7 @@ class MemoryOverlay(_HudOverlay):
         close.setCursor(Qt.CursorShape.PointingHandCursor)
         close.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px; }}
+                border: 1px solid {C.BORDER}; border-radius: 10px; }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
         close.clicked.connect(self.hide)
@@ -1333,8 +1404,8 @@ class ClipboardPanel(QWidget):
         self.setStyleSheet(f"""
             ClipboardPanel {{
                 background: rgba(0, 8, 14, 248);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                border: 1px solid {C.BORDER};
+                border-radius: 10px;
             }}
         """)
         self.setFixedWidth(self._W)
@@ -1362,7 +1433,7 @@ class ClipboardPanel(QWidget):
         self._preview.setFont(hud_font(8))
         self._preview.setStyleSheet(f"""
             color: {C.TEXT}; background: {C.PANEL2};
-            border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 6px;
+            border: 1px solid {C.BORDER}; border-radius: 10px; padding: 4px 6px;
         """)
         self._preview.setWordWrap(False)
         self._preview.setFixedHeight(28)
@@ -1426,9 +1497,9 @@ class PluginSettingsOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
             PluginSettingsOverlay {{
-                background: rgba(0, 6, 10, 245);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 6px;
+                background: {C.PANEL};
+                border: 1px solid {C.BORDER};
+                border-radius: 14px;
             }}
         """)
         self._sections = sections or []
@@ -1438,7 +1509,7 @@ class PluginSettingsOverlay(QWidget):
         self._test_done.connect(self._on_test_done)
 
         self._fs = (f"QLineEdit {{ background: #151c25; color: {C.TEXT}; "
-                    f"border: 1px solid {C.BORDER}; border-radius: 3px; padding: 4px 8px; }}"
+                    f"border: 1px solid {C.BORDER}; border-radius: 10px; padding: 4px 8px; }}"
                     f"QLineEdit:focus {{ border: 1px solid {C.PRI}; }}")
 
         root = QVBoxLayout(self)
@@ -1480,7 +1551,7 @@ class PluginSettingsOverlay(QWidget):
             save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             save_btn.setStyleSheet(f"""
                 QPushButton {{ background: transparent; color: {C.PRI};
-                    border: 1px solid {C.PRI_DIM}; border-radius: 3px; }}
+                    border: 1px solid {C.PRI_DIM}; border-radius: 10px; }}
                 QPushButton:hover {{ background: {C.PRI_GHO}; border: 1px solid {C.PRI}; }}
             """)
             save_btn.clicked.connect(self._save_all)
@@ -1492,7 +1563,7 @@ class PluginSettingsOverlay(QWidget):
         close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.setStyleSheet(f"""
             QPushButton {{ background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 3px; }}
+                border: 1px solid {C.BORDER}; border-radius: 10px; }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
         close_btn.clicked.connect(self.hide)
@@ -1535,7 +1606,7 @@ class PluginSettingsOverlay(QWidget):
                 w.setFixedHeight(30)
                 w.setStyleSheet(
                     f"QComboBox {{ background: #151c25; color: {C.TEXT}; "
-                    f"border: 1px solid {C.BORDER}; border-radius: 3px; padding: 2px 8px; }}"
+                    f"border: 1px solid {C.BORDER}; border-radius: 10px; padding: 2px 8px; }}"
                     f"QComboBox QAbstractItemView {{ background: #151c25; color: {C.TEXT}; "
                     f"selection-background-color: {C.PRI_GHO}; }}")
                 if stored is not None:
@@ -1573,7 +1644,7 @@ class PluginSettingsOverlay(QWidget):
             ab.setCursor(Qt.CursorShape.PointingHandCursor)
             ab.setStyleSheet(f"""
                 QPushButton {{ background: #00091a; color: {C.PRI};
-                    border: 1px solid {C.PRI_DIM}; border-radius: 3px; }}
+                    border: 1px solid {C.PRI_DIM}; border-radius: 10px; }}
                 QPushButton:hover {{ background: {C.PRI_GHO}; border-color: {C.PRI}; }}
             """)
             ab.clicked.connect(lambda _=False, n=ns: self._run_action(n))
@@ -1592,10 +1663,10 @@ class PluginSettingsOverlay(QWidget):
         btn.setText("ATIVADO" if on else "DESATIVADO")
         if on:
             btn.setStyleSheet(f"QPushButton {{ background: {C.PRI_GHO}; color: {C.PRI}; "
-                              f"border: 1px solid {C.PRI}; border-radius: 3px; }}")
+                              f"border: 1px solid {C.PRI}; border-radius: 10px; }}")
         else:
             btn.setStyleSheet(f"QPushButton {{ background: transparent; color: {C.TEXT_MED}; "
-                              f"border: 1px solid {C.BORDER}; border-radius: 3px; }}")
+                              f"border: 1px solid {C.BORDER}; border-radius: 10px; }}")
 
     # ── data ──────────────────────────────────────────────────────────────────
     def _gather(self, ns: str) -> dict:
@@ -1678,7 +1749,7 @@ class RemoteKeyOverlay(QWidget):
         self.setStyleSheet(f"""
             RemoteKeyOverlay {{
                 background: rgba(0, 4, 12, 0.95);
-                border: 1px solid {C.BORDER_B};
+                border: 1px solid {C.BORDER};
                 border-radius: 14px;
             }}
         """)
@@ -1777,7 +1848,7 @@ class RemoteKeyOverlay(QWidget):
         self._key_lbl.setStyleSheet(f"""
             color: {C.ACC};
             background: {C.PANEL2};
-            border: 1px solid {C.BORDER_B};
+            border: 1px solid {C.BORDER};
             border-radius: 8px;
             padding: 6px 4px;
             letter-spacing: 10px;
@@ -1799,7 +1870,7 @@ class RemoteKeyOverlay(QWidget):
         new_btn.setStyleSheet(f"""
             QPushButton {{
                 background: {C.PANEL}; color: {C.PRI};
-                border: 1px solid {C.PRI_DIM}; border-radius: 5px;
+                border: 1px solid {C.PRI_DIM}; border-radius: 8px;
             }}
             QPushButton:hover {{ background: {C.PRI_GHO}; border: 1px solid {C.PRI}; }}
         """)
@@ -1813,9 +1884,9 @@ class RemoteKeyOverlay(QWidget):
         close_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 5px;
+                border: 1px solid {C.BORDER}; border-radius: 8px;
             }}
-            QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER_B}; }}
+            QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER}; }}
         """)
         close_btn.clicked.connect(self._do_close)
         btn_row.addWidget(close_btn)
@@ -1909,7 +1980,7 @@ class RemoteKeyOverlay(QWidget):
                 self._key_lbl.setStyleSheet(f"""
                     color: {C.ACC};
                     background: {C.PANEL2};
-                    border: 1px solid {C.BORDER_B};
+                    border: 1px solid {C.BORDER};
                     border-radius: 8px;
                     padding: 6px 4px;
                     letter-spacing: 10px;

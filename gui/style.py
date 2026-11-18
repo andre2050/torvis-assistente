@@ -19,6 +19,7 @@ from __future__ import annotations
 from PyQt6.QtCore import QPointF, QRectF
 from PyQt6.QtGui import QColor, QFont, QPolygonF
 
+from PyQt6.QtCore import Qt
 from gui.theme import C
 
 DISPLAY_FAMILIES = ["Bahnschrift", "Segoe UI", "SF Pro Display", "Helvetica Neue",
@@ -108,34 +109,44 @@ def chamfer(r: QRectF, cut: float, corners=("tl", "br")) -> QPolygonF:
 def btn_css(kind: str = "dim", align: str = "left") -> str:
     """Stylesheet for a drawer/panel button.
 
+    Minimal Pro: these are cards, not bars. Rounded, hairline, no left stripe
+    shouting on every row — the accent appears on the row you point at, and a
+    filled surface says which of the switches is on.
+
     kind: "primary" (the main action), "dim" (ordinary), "on" / "off" (a switch),
     "choice" (one of two equal options — neither reads as disabled)."""
-    pad = "padding: 0 10px;" if align == "left" else "padding: 0 6px;"
-    base = f"text-align: {align}; {pad} border-radius: 0px;"
+    pad = "padding: 0 14px;" if align == "left" else "padding: 0 8px;"
+    base = f"text-align: {align}; {pad} border-radius: 10px;"
     if kind == "primary":
         return f"""
             QPushButton {{ background: {C.PRI_GHO}; color: {C.PRI};
-                border: 1px solid {C.PRI_DIM}; border-left: 3px solid {C.PRI}; {base} }}
-            QPushButton:hover {{ border-color: {C.PRI}; color: {C.WHITE}; }}
+                border: 1px solid {C.BORDER_A}; {base} }}
+            QPushButton:hover {{ background: {C.PANEL2}; color: {C.WHITE};
+                border-color: {C.PRI_DIM}; }}
             QPushButton:disabled {{ color: {C.TEXT_DIM}; border-color: {C.BORDER}; }}"""
     if kind == "on":
         return f"""
             QPushButton {{ background: {C.PANEL2}; color: {C.GREEN};
-                border: 1px solid {C.GREEN_D}; border-left: 3px solid {C.GREEN}; {base} }}
-            QPushButton:hover {{ border-color: {C.GREEN}; }}
+                border: 1px solid {C.BORDER}; {base} }}
+            QPushButton:hover {{ border-color: {C.GREEN_D}; color: {C.GREEN}; }}
             QPushButton:disabled {{ color: {C.TEXT_DIM}; border-color: {C.BORDER}; }}"""
     if kind == "choice":
         return f"""
-            QPushButton {{ background: {C.PANEL2}; color: {C.PRI};
-                border: 1px solid {C.BORDER_A}; border-left: 3px solid {C.PRI_DIM}; {base} }}
-            QPushButton:hover {{ color: {C.WHITE}; border-color: {C.BORDER_B}; }}"""
+            QPushButton {{ background: {C.PANEL2}; color: {C.TEXT_MED};
+                border: 1px solid {C.BORDER}; {base} }}
+            QPushButton:hover {{ color: {C.WHITE}; border-color: {C.BORDER_B}; }}
+            QPushButton:checked {{ background: {C.PRI_GHO}; color: {C.PRI};
+                border-color: {C.PRI_DIM}; }}"""
     # "dim" and "off"
+    relevo = (f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {C.PANEL2}, "
+              f"stop:1 {C.PANEL})")
     return f"""
-        QPushButton {{ background: {C.PANEL}; color: {C.TEXT_MED if kind == 'dim' else C.TEXT_DIM};
-            border: 1px solid {C.BORDER}; border-left: 3px solid {C.BORDER_A}; {base} }}
-        QPushButton:hover {{ color: {C.PRI}; border-color: {C.BORDER_B};
-            border-left: 3px solid {C.PRI_DIM}; }}
-        QPushButton:disabled {{ color: {C.TEXT_DIM}; border-color: {C.BORDER}; }}"""
+        QPushButton {{ background: {relevo}; color: {C.TEXT_MED if kind == 'dim' else C.TEXT_DIM};
+            border: 1px solid {C.BORDER}; border-bottom: 1px solid {C.DARK}; {base} }}
+        QPushButton:hover {{ background: {C.PANEL2}; color: {C.WHITE};
+            border-color: {C.BORDER_B}; }}
+        QPushButton:disabled {{ background: {C.PANEL}; color: {C.TEXT_DIM};
+            border-color: {C.BORDER}; }}"""
 
 
 def scroll_css() -> str:
@@ -146,3 +157,34 @@ def scroll_css() -> str:
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; border: none; }}
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
         QScrollBar:horizontal {{ height: 0; }}"""
+
+
+# -- luz ---------------------------------------------------------------
+# Minimal Pro is flat, but flat reads as a screenshot of a mockup. These two
+# helpers give a surface the little it takes to look like a real object: a
+# soft shadow underneath and a light line along the top edge.
+
+def sombra_suave(p, rect, raio: float = 12.0, passos: int = 10,
+                 forca: float = 0.055) -> None:
+    """A soft drop shadow below `rect`, painted away from the light."""
+    from PyQt6.QtCore import QRectF
+    from PyQt6.QtGui import QBrush, QColor
+    for i in range(passos, 0, -1):
+        alpha = int(255 * forca * (i / passos) ** 2.2)
+        if alpha <= 0:
+            continue
+        r = QRectF(rect).adjusted(-i * 0.9, -i * 0.35 + i * 0.5, i * 0.9, i * 0.9 + i * 0.5)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QBrush(QColor(0, 0, 0, alpha)))
+        p.drawRoundedRect(r, raio + i * 0.6, raio + i * 0.6)
+
+
+def brilho_topo(p, rect, raio: float = 12.0, alpha: int = 22) -> None:
+    """A one-pixel highlight inside the top edge — the light comes from above."""
+    from PyQt6.QtCore import QRectF
+    from PyQt6.QtGui import QBrush, QColor, QPen
+    r = QRectF(rect)
+    p.setPen(QPen(QBrush(QColor(255, 255, 255, alpha)), 1))
+    p.setBrush(Qt.BrushStyle.NoBrush)
+    p.drawRoundedRect(QRectF(r.left() + 1, r.top() + 1, r.width() - 2, r.height() - 1),
+                      raio - 0.5, raio - 0.5)

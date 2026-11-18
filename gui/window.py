@@ -81,6 +81,7 @@ from gui.overlays import (
     PluginSettingsOverlay,
     RemoteKeyOverlay,
     SetupOverlay,
+    NucleoIsaOverlay,
 )
 from gui.providers_panel import (
     ProvidersOverlay,
@@ -1826,8 +1827,8 @@ class MainWindow(QMainWindow):
 
         def _btn(text, slot, style=None):
             b = QPushButton(text)
-            b.setFixedHeight(30)
-            b.setFont(px_font(11, QFont.Weight.DemiBold, spacing=1.2))
+            b.setFixedHeight(34)
+            b.setFont(px_font(11, QFont.Weight.DemiBold, spacing=1.0))
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.setStyleSheet(style or self._BTN_DIM)
             b.clicked.connect(slot)
@@ -1835,8 +1836,9 @@ class MainWindow(QMainWindow):
             return b
 
         _btn("◉  CONTROLE REMOTO", self._open_remote, self._BTN_PRI)
-        _btn("⊞  CRIAR ATALHO NA ÁREA DE TRABALHO", self._create_desktop_shortcut)
+        _btn("⊞  ATALHO NA ÁREA DE TRABALHO", self._create_desktop_shortcut)
         self._autostart_btn = _btn("◉  INÍCIO AUTOMÁTICO: DESATIVADO", self._toggle_autostart)
+        _btn("◈  NÚCLEO I.S.A.", self._open_nucleo_isa, self._BTN_PRI)
         _btn("⚙  PERSONALIZAR ASSISTENTE", self._open_customize)
         _btn("🎧  DISPOSITIVOS DE ÁUDIO", self._open_audio_devices)
         _btn("◈  GALERIA DE HUBS", self._open_hub_gallery, self._BTN_PRI)
@@ -1851,8 +1853,8 @@ class MainWindow(QMainWindow):
         # "&&": a single & in a button label is Qt's shortcut marker, and it
         # was being drawn as an underscore — "ENGINE _PROVIDERS".
         _btn("🔌  MOTOR && PROVEDORES", self._open_providers)
-        _btn("🎓  LABORATÓRIO  ·  AJUSTE FINO E CAPSTONE", self._open_laboratorio)
-        _btn(f"↻  ATUALIZAR SISTEMA  ·  {APP_VERSION}", self._atualizar_sistema, self._BTN_PRI)
+        _btn("🎓  LABORATÓRIO · AJUSTE FINO", self._open_laboratorio)
+        _btn(f"↻  ATUALIZAR · {APP_VERSION}", self._atualizar_sistema, self._BTN_PRI)
 
         w.adjustSize()
         return w
@@ -2906,6 +2908,26 @@ class MainWindow(QMainWindow):
             return
         self._brief_btn.setText("☀  RESUMO MATINAL: ATIVADO" if enabled else "☀  RESUMO MATINAL: DESATIVADO")
         self._brief_btn.setStyleSheet(btn_css("on" if enabled else "off"))
+
+    def _open_nucleo_isa(self):
+        """Mostra o núcleo: versão, motor, voz e estado, com atalho para a chave."""
+        from core.version import VERSAO
+        cfg = _read_full_config()
+        dados = {
+            "versao": VERSAO,
+            "motor": cfg.get("engine") or "GEMINI LIVE",
+            "voz": cfg.get("voice_name") or "—",
+            "estado": "PRONTO" if self._ready else "FALTA CHAVE",
+        }
+        cw = self.centralWidget()
+        ov = NucleoIsaOverlay(dados, parent=cw)
+        ow, oh = NucleoIsaOverlay._OW, NucleoIsaOverlay._OH
+        ov.setGeometry((cw.width() - ow) // 2, (cw.height() - oh) // 2, ow, oh)
+        ov.abrir_setup.connect(lambda: (ov.hide(), self._show_setup()))
+        ov.destroyed.connect(lambda *_a: setattr(self, "_nucleo_overlay", None))
+        ov.show()
+        ov.raise_()
+        self._nucleo_overlay = ov
 
     def _open_customize(self):
         cfg = _read_full_config()

@@ -43,7 +43,8 @@ from collections import deque
 
 from PyQt6.QtGui import QPolygonF, QTextBlockFormat, QTextCharFormat
 
-from gui.style import (blend, chamfer, hud_font, px_font, scroll_css, with_alpha)
+from gui.style import (blend, chamfer, hud_font, px_font, scroll_css, with_alpha,
+                       sombra_suave, brilho_topo)
 
 
 class MetricBar(QWidget):
@@ -656,12 +657,16 @@ class HoloPanel(QWidget):
         # The cyan wash and the lit chamfers made every card glow; a card only
         # has to lift off the background.
         r = 12.0
+        # sombra primeiro: o cartão passa a ser um objeto sobre o fundo
+        sombra_suave(p, QRectF(2, 3, W - 4, H - 5), raio=r)
         g = QLinearGradient(0, 0, 0, H)
         g.setColorAt(0.0, qcol(C.PANEL2))
-        g.setColorAt(1.0, qcol(C.PANEL))
+        g.setColorAt(0.55, qcol(C.PANEL))
+        g.setColorAt(1.0, blend(C.PANEL, 0.35))
         p.setBrush(QBrush(g))
         p.setPen(QPen(qcol(C.BORDER), 1))
         p.drawRoundedRect(QRectF(0.5, 0.5, W - 1, H - 1), r, r)
+        brilho_topo(p, QRectF(0.5, 0.5, W - 1, H - 1), raio=r, alpha=18)
         if self._title:
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QBrush(qcol(C.ACC)))
