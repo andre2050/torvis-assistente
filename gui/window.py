@@ -179,8 +179,8 @@ class MainWindow(QMainWindow):
         root.addWidget(self._build_header())
 
         body = QHBoxLayout()
-        body.setContentsMargins(10, 10, 10, 10)
-        body.setSpacing(10)
+        body.setContentsMargins(16, 14, 16, 16)
+        body.setSpacing(12)
 
         self._left_panel = self._build_left_panel()
         body.addWidget(self._left_panel, stretch=0)
@@ -1252,7 +1252,7 @@ class MainWindow(QMainWindow):
 
     def _build_header(self) -> QWidget:
         w = HeaderBar()
-        w.setFixedHeight(58)
+        w.setFixedHeight(64)
         self._header = w
         lay = QHBoxLayout(w)
         lay.setContentsMargins(14, 6, 14, 8)
@@ -1392,10 +1392,10 @@ class MainWindow(QMainWindow):
     def _build_left_panel(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        w.setFixedWidth(200)
+        w.setFixedWidth(228)
         lay = QVBoxLayout(w)
         lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(10)
+        lay.setSpacing(12)
 
         sysp = HoloPanel("SISTEMAS", "ATIVOS")
         grid_w = QWidget()
@@ -1648,7 +1648,7 @@ class MainWindow(QMainWindow):
     def _build_right_panel(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        w.setFixedWidth(300)
+        w.setFixedWidth(344)
         lay = QVBoxLayout(w)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(10)

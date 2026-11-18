@@ -652,43 +652,35 @@ class HoloPanel(QWidget):
             return
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         W, H = self.width(), self.height()
-        cut = 11
+        # Minimal Pro: a flat surface with a hairline edge and one accent tick.
+        # The cyan wash and the lit chamfers made every card glow; a card only
+        # has to lift off the background.
+        r = 12.0
         g = QLinearGradient(0, 0, 0, H)
-        g.setColorAt(0.0, blend(C.PRI, 0.085))
-        g.setColorAt(0.18, blend(C.PRI, 0.045))
-        g.setColorAt(1.0, blend(C.PRI, 0.025))
+        g.setColorAt(0.0, qcol(C.PANEL2))
+        g.setColorAt(1.0, qcol(C.PANEL))
         p.setBrush(QBrush(g))
-        p.setPen(QPen(blend(C.PRI, 0.24), 1))
-        p.drawPolygon(chamfer(QRectF(0.5, 0.5, W - 1, H - 1), cut))
-        # lit edges: the two chamfers and a short run along from each
-        p.setPen(QPen(blend(C.PRI, 0.85), 1.6))
-        p.drawLine(QLineF(0.5, cut + 0.5, cut + 0.5, 0.5))
-        p.drawLine(QLineF(cut + 0.5, 0.5, cut + 44, 0.5))
-        p.drawLine(QLineF(W - 0.5, H - cut - 0.5, W - cut - 0.5, H - 0.5))
-        p.drawLine(QLineF(W - cut - 0.5, H - 0.5, W - cut - 34, H - 0.5))
+        p.setPen(QPen(qcol(C.BORDER), 1))
+        p.drawRoundedRect(QRectF(0.5, 0.5, W - 1, H - 1), r, r)
         if self._title:
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QBrush(qcol(C.ACC)))
-            p.drawRect(QRectF(12, 11, 3, 10))
+            p.drawRoundedRect(QRectF(14, 12, 3, 9), 1.5, 1.5)
             right = self._header_right()
             code_w = 0.0
             if self._code:
                 p.setFont(px_font(10, mono=True))
                 code_w = p.fontMetrics().horizontalAdvance(self._code) + 8
-                p.setPen(QPen(blend(C.PRI, 0.5)))
+                p.setPen(QPen(qcol(C.TEXT_DIM)))
                 p.drawText(QRectF(right - code_w, 6, code_w, 20),
                            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight, self._code)
-            p.setFont(px_font(11, QFont.Weight.DemiBold, spacing=1.8))
-            p.setPen(QPen(qcol(C.PRI)))
-            room = max(10.0, right - code_w - 26)
-            p.drawText(QRectF(21, 6, room, 20), Qt.AlignmentFlag.AlignVCenter,
+            p.setFont(px_font(11, QFont.Weight.DemiBold, spacing=1.6))
+            p.setPen(QPen(qcol(C.TEXT_MED)))
+            room = max(10.0, right - code_w - 28)
+            p.drawText(QRectF(24, 6, room, 20), Qt.AlignmentFlag.AlignVCenter,
                        p.fontMetrics().elidedText(self._title, Qt.TextElideMode.ElideRight, int(room)))
-            lg = QLinearGradient(12, 0, W - 12, 0)
-            lg.setColorAt(0.0, with_alpha(C.PRI, 0.55))
-            lg.setColorAt(0.6, with_alpha(C.PRI, 0.12))
-            lg.setColorAt(1.0, with_alpha(C.PRI, 0.0))
-            p.setPen(QPen(QBrush(lg), 1))
-            p.drawLine(QLineF(12, self.HEADER, W - 12, self.HEADER))
+            p.setPen(QPen(qcol(C.BORDER), 1))
+            p.drawLine(QLineF(14, self.HEADER + 1, W - 14, self.HEADER + 1))
         p.end()
 
 
@@ -1078,18 +1070,12 @@ class HeaderBar(QWidget):
         if not p.isActive():
             return
         W, H = self.width(), self.height()
-        g = QLinearGradient(0, 0, 0, H)
-        g.setColorAt(0, blend(C.PRI, 0.06))
-        g.setColorAt(1, qcol(C.BG))
-        p.fillRect(self.rect(), QBrush(g))
-        lg = QLinearGradient(0, 0, W, 0)
-        lg.setColorAt(0.0, with_alpha(C.PRI, 0.05))
-        lg.setColorAt(0.5, with_alpha(C.PRI, 0.9))
-        lg.setColorAt(1.0, with_alpha(C.PRI, 0.05))
-        p.setPen(QPen(QBrush(lg), 1))
-        p.drawLine(QLineF(0, H - 1.5, W, H - 1.5))
+        p.fillRect(self.rect(), qcol(C.PANEL))
+        p.setPen(QPen(qcol(C.BORDER), 1))
+        p.drawLine(QLineF(0, H - 0.5, W, H - 0.5))
+        # um traço curto de acento sob o nome, o único ponto aceso da barra
         p.setPen(QPen(qcol(C.PRI), 2))
-        p.drawLine(QLineF(W / 2 - 70, H - 1.5, W / 2 + 70, H - 1.5))
+        p.drawLine(QLineF(18, H - 1.0, 66, H - 1.0))
         p.end()
 
 
@@ -1118,8 +1104,8 @@ class StatusStrip(QWidget):
             return
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         W, H = self.width(), self.height()
-        p.fillRect(self.rect(), blend(C.PRI, 0.03))
-        p.setPen(QPen(blend(C.PRI, 0.2), 1))
+        p.fillRect(self.rect(), qcol(C.PANEL))
+        p.setPen(QPen(qcol(C.BORDER), 1))
         p.drawLine(QLineF(0, 0.5, W, 0.5))
         p.setFont(px_font(10.5, QFont.Weight.DemiBold, spacing=1.1))
         fm = p.fontMetrics()
@@ -1132,7 +1118,7 @@ class StatusStrip(QWidget):
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QBrush(qcol(_pal(colour) or C.PRI)))
             p.drawEllipse(QPointF(x + 3, H / 2), 2.6, 2.6)
-            p.setPen(QPen(qcol(C.TEXT_MED)))
+            p.setPen(QPen(qcol(C.TEXT_DIM)))
             p.drawText(QRectF(x + 11, 0, w + 4, H), Qt.AlignmentFlag.AlignVCenter, label)
             x += w + 34
         p.setPen(QPen(qcol(C.TEXT_DIM)))
