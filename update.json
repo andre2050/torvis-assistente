@@ -1,7 +1,7 @@
 {
-    "version": "7.5.0",
+    "version": "7.6.0",
     "channel": "stable",
-    "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v7.5.0/TORVIS-Assistente-v7.5.0.zip",
-    "sha256": "2c8eef67b58cb62a87d01a7566c8503cd0e890adab8826fed971712934a5e238",
+    "package_url": "https://github.com/andre2050/torvis-assistente/releases/download/v7.6.0/TORVIS-Assistente-v7.6.0.zip",
+    "sha256": "d4f241f2744d4767d4e8cb208f003c6d9a13a89651942e65e21db3e27bb4d60a",
     "notes": "TORVIS 7.4.0: pc_master abre qualquer programa instalado, fecha janelas e programas, cria site/app/jogo do zero e abre no editor. Rodape neutro e modelos Minimal Pro e Carbon."
 }
