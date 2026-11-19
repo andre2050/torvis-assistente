@@ -74,6 +74,32 @@ def whatsapp_secretary(parameters=None, **_context) -> str:
         disponivel, motivo = secretaria.disponivel()
         if not disponivel:
             return _falha(motivo)
+        if acao == "modo":
+            valor = str(p.get("texto") or p.get("modo") or "").strip().lower()
+            if valor not in {"texto", "audio", "ambos"}:
+                return _falha("modo deve ser texto, audio ou ambos")
+            wa.salvar_config({"modo_resposta": valor})
+            return _ok(modo=valor)
+        if acao in {"ler", "mensagens"}:
+            return _ok(mensagens=secretaria.ler_mensagens(int(p.get("limite") or 20)))
+        if acao == "arquivo":
+            caminho = str(p.get("texto") or p.get("caminho") or "").strip()
+            if not caminho:
+                return _falha("informe o caminho do arquivo")
+            try:
+                secretaria.enviar_documento(destino, caminho, str(p.get("legenda") or ""))
+            except Exception as exc:  # noqa: BLE001
+                return _falha(str(exc))
+            return _ok(enviado="arquivo", para=destino, caminho=caminho)
+        if acao == "pasta":
+            caminho = str(p.get("texto") or p.get("caminho") or "").strip()
+            if not caminho:
+                return _falha("informe o caminho da pasta")
+            try:
+                r = secretaria.enviar_pasta(destino, caminho, str(p.get("legenda") or ""))
+            except Exception as exc:  # noqa: BLE001
+                return _falha(str(exc))
+            return _ok(enviado="pasta", para=destino, arquivos=r.get("arquivos"))
         if acao == "enviar":
             texto = str(p.get("texto") or "").strip()
             if not texto:
@@ -118,10 +144,17 @@ TOOL = {
         "type": "OBJECT",
         "properties": {
             "action": {"type": "STRING",
-                       "description": "status, ligar, desligar, permitir, remover, enviar, audio ou recado"},
+                       "description": ("status, ligar, desligar, permitir, remover, enviar, audio, "
+                                    "recado, modo, arquivo, pasta ou ler")},
             "numero": {"type": "STRING", "description": "número com DDI, só dígitos ou com pontuação"},
             "para": {"type": "STRING", "description": "destinatário do envio"},
-            "texto": {"type": "STRING", "description": "conteúdo da mensagem ou do recado"},
+            "texto": {"type": "STRING",
+                      "description": ("conteúdo da mensagem ou do recado; em modo "
+                                      "use texto|audio|ambos; em arquivo e pasta "
+                                      "use o caminho completo")},
+            "caminho": {"type": "STRING", "description": "caminho do arquivo ou da pasta a enviar"},
+            "legenda": {"type": "STRING", "description": "legenda que acompanha o arquivo"},
+            "limite": {"type": "INTEGER", "description": "quantas mensagens ler"},
         },
         "required": ["action"],
     },

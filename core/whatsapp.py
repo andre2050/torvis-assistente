@@ -44,6 +44,28 @@ AUDIO_OK = {
 }
 
 
+# Formatos de documento aceitos pela Cloud API (o que o usuário manda como
+# arquivo: PDF, planilha, zip de pasta, imagem).
+DOC_OK = {
+    ".pdf": "application/pdf",
+    ".zip": "application/zip",
+    ".txt": "text/plain",
+    ".csv": "text/csv",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".ppt": "application/vnd.ms-powerpoint",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+}
+LIMITE_DOC = 100 * 1024 * 1024          # a Meta aceita até 100 MB por documento
+
+ARQUIVO_CAIXA = USERDATA_DIR / "whatsapp-inbox.json"
+MAX_CAIXA = 500                          # últimas mensagens guardadas
+
 _MODELO_STT: Any = None
 
 
@@ -85,6 +107,8 @@ def config_inicial() -> dict[str, Any]:
         "verificar": "",          # palavra que a Meta repete no cadastro do webhook
         "ligada": False,
         "responder_audio": True,
+        # texto | audio | ambos — como a secretária responde no chat
+        "modo_resposta": "ambos",
         "permitidos": [],          # vazio = qualquer um (não recomendado)
         "silencioso_inicio": 23,
         "silencioso_fim": 7,
@@ -239,6 +263,106 @@ class SecretariaWhatsApp:
         self.enviados.append({"tipo": "audio", "para": para, "arquivo": destino.name})
         return resposta
 
+    def modo_resposta(self) -> str:
+        """texto | audio | ambos. O antigo interruptor responder_audio continua
+        valendo: quem já tinha áudio ligado não perde o áudio ao atualizar."""
+        modo = str(self.cfg.get("modo_resposta") or "").strip().lower()
+        if modo in {"texto", "audio", "ambos"}:
+            return modo
+        return "ambos" if self.cfg.get("responder_audio") else "texto"
+
+    def _subir_documento(self, caminho: Path) -> str:
+        tipo = DOC_OK.get(caminho.suffix.lower())
+        if not tipo:
+            raise ValueError(f"formato não aceito pela Meta: {caminho.suffix or 'sem extensão'}")
+        dados = caminho.read_bytes()
+        if len(dados) > LIMITE_DOC:
+            raise ValueError(f"{caminho.name} passa de 100 MB")
+        fronteira = "----torvis" + str(int(time.time() * 1000))
+        partes = [
+            f"--{fronteira}\r\nContent-Disposition: form-data; name=\"messaging_product\"\r\n\r\nwhatsapp\r\n".encode(),
+            (f"--{fronteira}\r\nContent-Disposition: form-data; name=\"file\"; "
+             f"filename=\"{caminho.name}\"\r\nContent-Type: {tipo}\r\n\r\n").encode() + dados + b"\r\n",
+            f"--{fronteira}--\r\n".encode(),
+        ]
+        if self.ensaio:
+            return "documento-de-ensaio"
+        resposta = self._pedir(self._url(f"{self.cfg['numero_id']}/media"), b"".join(partes),
+                               cabecalhos={"Content-Type": f"multipart/form-data; boundary={fronteira}"})
+        return str((resposta or {}).get("id") or "")
+
+    def enviar_documento(self, para: str, caminho: Path | str, legenda: str = "") -> dict[str, Any]:
+        """Manda um arquivo como documento, com legenda opcional."""
+        ok, motivo = self.disponivel()
+        if not ok:
+            raise SecretariaIndisponivel(motivo)
+        destino = Path(caminho).expanduser()
+        if not destino.is_file():
+            raise FileNotFoundError(destino)
+        media_id = self._subir_documento(destino)
+        documento: dict[str, Any] = {"id": media_id, "filename": destino.name}
+        if legenda:
+            documento["caption"] = legenda[:1024]
+        corpo = {"messaging_product": "whatsapp", "to": so_digitos(para),
+                 "type": "document", "document": documento}
+        resposta = self._pedir(self._url(f"{self.cfg['numero_id']}/messages"),
+                               json.dumps(corpo).encode(),
+                               cabecalhos={"Content-Type": "application/json"})
+        self.enviados.append({"tipo": "documento", "para": para, "arquivo": destino.name})
+        return resposta
+
+    def enviar_pasta(self, para: str, pasta: Path | str, legenda: str = "") -> dict[str, Any]:
+        """Compacta a pasta num zip e manda como documento.
+
+        Pasta não existe como anexo no WhatsApp: o caminho é zipar. O zip fica
+        num arquivo temporário e é apagado depois do envio.
+        """
+        import shutil
+        import tempfile
+        origem = Path(pasta).expanduser()
+        if not origem.is_dir():
+            raise NotADirectoryError(origem)
+        arquivos = [p for p in origem.rglob("*") if p.is_file()]
+        if not arquivos:
+            raise ValueError("a pasta está vazia")
+        temporario = Path(tempfile.mkdtemp(prefix="torvis-pasta-")) / f"{origem.name}.zip"
+        try:
+            with __import__("zipfile").ZipFile(temporario, "w", __import__("zipfile").ZIP_DEFLATED) as z:
+                for arquivo in arquivos:
+                    z.write(arquivo, arquivo.relative_to(origem))
+            resultado = self.enviar_documento(para, temporario, legenda or origem.name)
+        finally:
+            shutil.rmtree(temporario.parent, ignore_errors=True)
+        resultado = dict(resultado or {})
+        resultado["arquivos"] = len(arquivos)
+        return resultado
+
+    # ── caixa de entrada ───────────────────────────────────────────────────
+    def registrar_recebida(self, msg: Mensagem) -> None:
+        """Guarda o que chegou, para o assistente poder ler depois por comando."""
+        try:
+            caixa = self.ler_mensagens(limite=MAX_CAIXA - 1)
+        except Exception:
+            caixa = []
+        caixa.append({"de": msg.de, "texto": msg.texto[:2000],
+                      "audio": bool(msg.tem_audio), "quando": int(time.time())})
+        try:
+            ARQUIVO_CAIXA.parent.mkdir(parents=True, exist_ok=True)
+            ARQUIVO_CAIXA.write_text(json.dumps(caixa[-MAX_CAIXA:], ensure_ascii=False, indent=2),
+                                     encoding="utf-8")
+        except OSError:
+            pass
+
+    def ler_mensagens(self, limite: int = 20) -> list[dict[str, Any]]:
+        """Últimas mensagens recebidas, da mais nova para a mais antiga."""
+        try:
+            dados = json.loads(ARQUIVO_CAIXA.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return []
+        if not isinstance(dados, list):
+            return []
+        return list(reversed(dados))[:max(1, int(limite))]
+
     @staticmethod
     def _tmp(sufixo: str) -> str:
         import tempfile
@@ -301,14 +425,20 @@ class SecretariaWhatsApp:
         resposta = (gerador(pergunta) or "").strip()
         if not resposta:
             return {"ok": False, "motivo": "o assistente não produziu resposta"}
-        self.enviar_texto(msg.de, resposta)
-        audio = None
-        if self.cfg.get("responder_audio") and falar is not None:
+        modo = self.modo_resposta()
+        texto_enviado = audio = None
+        if modo in {"texto", "ambos"}:
+            texto_enviado = self.enviar_texto(msg.de, resposta)
+        if modo in {"audio", "ambos"} and falar is not None:
             try:
                 audio = self.enviar_audio(msg.de, falar(resposta))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - o texto já saiu; o áudio é extra
                 audio = {"erro": str(exc)}
-        return {"ok": True, "pergunta": pergunta, "resposta": resposta, "audio": audio}
+        elif modo == "audio" and falar is None:
+            # sem voz disponível, mandar em texto é melhor do que não responder
+            texto_enviado = self.enviar_texto(msg.de, resposta)
+        return {"ok": True, "pergunta": pergunta, "resposta": resposta,
+                "modo": modo, "texto": texto_enviado, "audio": audio}
 
     def avisar_chamada_perdida(self, numero: str, nome: str = "") -> dict[str, Any]:
         """Ligação perdida não pode ser atendida pela API de mensagens; então a

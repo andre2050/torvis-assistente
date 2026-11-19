@@ -65,6 +65,8 @@ def processar(corpo: dict, secretaria: wa.SecretariaWhatsApp, *, com_audio: bool
         if evento["tipo"] == "mensagem":
             msg = wa.Mensagem(de=evento["de"], texto=evento["texto"], nome=evento["nome"],
                               tipo=evento["tipo_midia"], media_id=evento["media_id"])
+            # guarda antes de responder: o assistente pode ler depois por comando
+            secretaria.registrar_recebida(msg)
             resultado = secretaria.responder_mensagem(
                 msg, gerador_padrao, falar=falar_mp3 if com_audio else None)
             print(f"[whatsapp] {evento['de']}: {resultado}", flush=True)
