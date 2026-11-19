@@ -8,6 +8,7 @@ conteúdo real do projeto, então pacote e manifesto nunca saem de sincronia.
 Uso:
     python tools/gerar_pacote.py                 # gera dist/TORVIS-Assistente-v<versao>.zip
     python tools/gerar_pacote.py --destino saida/
+    python tools/gerar_pacote.py --enxuto        # só o que o app usa ao rodar
 """
 from __future__ import annotations
 
@@ -24,6 +25,14 @@ IGNORAR_EXT = {".pyc", ".log", ".jsonl"}
 IGNORAR_NOME = {"relatorio-torvis.txt", "relatorio_chave.txt", "erros.old.log",
                 "model_ladder.json", "uso_ia.json"}
 
+# Modo enxuto: só o que o app carrega quando roda. O repositório pode (e deve)
+# guardar documentação, testes e histórico de versões; a pasta de quem usa,
+# não. Sem isso o pacote saía com 60 MB e 91 itens na raiz, a maioria .md.
+RUNTIME_DIRS = ("core", "gui", "actions", "providers", "config", "memory",
+                "tools", "dashboard", "neural", "plugins", "models")
+RUNTIME_FILES = ("main.py", "ui.py", "ATUALIZAR-TORVIS.pyw", "update.json",
+                 "update-manifest.json", "INICIAR.bat", "LEIA-ME.md")
+
 
 def _sha256(caminho: Path) -> str:
     h = hashlib.sha256()
@@ -31,6 +40,20 @@ def _sha256(caminho: Path) -> str:
         for bloco in iter(lambda: f.read(1 << 20), b""):
             h.update(bloco)
     return h.hexdigest()
+
+
+def _arquivos_enxutos(base: Path) -> list[Path]:
+    """Só o necessário para o TORVIS abrir e funcionar."""
+    saida: list[Path] = []
+    for nome in RUNTIME_DIRS:
+        pasta = base / nome
+        if pasta.is_dir():
+            saida += [p for p in _arquivos(pasta) if p.is_file()]
+    for nome in RUNTIME_FILES:
+        alvo = base / nome
+        if alvo.is_file():
+            saida.append(alvo)
+    return sorted(saida)
 
 
 def _arquivos(base: Path) -> list[Path]:
@@ -68,7 +91,7 @@ def versao() -> str:
     return VERSAO
 
 
-def gerar(destino: Path | None = None) -> tuple[Path, str]:
+def gerar(destino: Path | None = None, enxuto: bool = False) -> tuple[Path, str]:
     v = versao()
     destino = Path(destino or RAIZ / "dist")
     destino.mkdir(parents=True, exist_ok=True)
@@ -81,7 +104,7 @@ def gerar(destino: Path | None = None) -> tuple[Path, str]:
         shutil.rmtree(pasta)
     pasta.mkdir(parents=True)
 
-    arquivos = _arquivos(RAIZ)
+    arquivos = _arquivos_enxutos(RAIZ) if enxuto else _arquivos(RAIZ)
     repetidos = colisoes_de_caixa(arquivos, RAIZ)
     if repetidos:
         detalhe = "; ".join(" / ".join(nomes) for nomes in repetidos.values())
@@ -119,7 +142,7 @@ if __name__ == "__main__":
     destino = None
     if "--destino" in sys.argv:
         destino = Path(sys.argv[sys.argv.index("--destino") + 1])
-    caminho, hash_zip = gerar(destino)
+    caminho, hash_zip = gerar(destino, enxuto="--enxuto" in sys.argv)
     print(f"pacote: {caminho}")
     print(f"arquivos: {len(json.loads((caminho.parent / caminho.stem / 'update-manifest.json').read_text(encoding='utf-8'))['files'])}")
     print(f"sha256: {hash_zip}")
