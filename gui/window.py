@@ -444,6 +444,7 @@ class MainWindow(QMainWindow):
 
         self._overlay: SetupOverlay | None = None
         self._ready = self._check_config()
+        self._agendar_checagem_de_atualizacao()
         if not self._ready:
             self._show_setup()
 
@@ -1854,7 +1855,8 @@ class MainWindow(QMainWindow):
         # was being drawn as an underscore — "ENGINE _PROVIDERS".
         _btn("🔌  MOTOR && PROVEDORES", self._open_providers)
         _btn("🎓  LABORATÓRIO · AJUSTE FINO", self._open_laboratorio)
-        _btn(f"↻  ATUALIZAR · {APP_VERSION}", self._atualizar_sistema, self._BTN_PRI)
+        self._update_btn = _btn(f"↻  ATUALIZAR · {APP_VERSION}",
+                                self._atualizar_sistema, self._BTN_PRI)
 
         w.adjustSize()
         return w
@@ -3516,6 +3518,53 @@ class MainWindow(QMainWindow):
                "Seus dados, chave e memória não são alterados.")
         # Meio segundo é suficiente para o texto aparecer antes da janela sumir.
         QTimer.singleShot(900, QApplication.quit)
+
+    def _checar_atualizacao_ao_abrir(self):
+        """Olha o GitHub sozinho, sem interromper, e avisa no próprio botão.
+
+        Antes a única forma de saber era clicar em ATUALIZAR. Quem não clicava
+        ficava em versão antiga sem saber, e a atualização virava uma tarefa de
+        lembrar em vez de uma coisa que acontece.
+        """
+        try:
+            from core.update_manager import check_for_update
+        except Exception:
+            return
+
+        def worker():
+            try:
+                r = check_for_update()
+            except Exception:
+                return                      # sem rede ou fonte fora: silêncio
+            if not r.get("update_available"):
+                return
+            nova = str(r.get("remote_version") or "").strip()
+            if not nova:
+                return
+            botao = getattr(self, "_update_btn", None)
+            if botao is not None:
+                try:
+                    botao.setText(f"↻  ATUALIZAR · {nova} DISPONÍVEL")
+                    botao.setToolTip(f"Versão {nova} publicada no repositório oficial. "
+                                     "Um clique baixa, confere e reabre já atualizado.")
+                except Exception:
+                    pass
+            try:
+                self._log.append_log(f"SYS: versão {nova} disponível no GitHub — clique em ATUALIZAR.")
+            except Exception:
+                pass
+
+        import threading
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _agendar_checagem_de_atualizacao(self):
+        """Primeira olhada oito segundos depois de abrir; depois, de seis em seis horas."""
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(8000, self._checar_atualizacao_ao_abrir)
+        self._timer_atualizacao = QTimer(self)
+        self._timer_atualizacao.setInterval(6 * 60 * 60 * 1000)
+        self._timer_atualizacao.timeout.connect(self._checar_atualizacao_ao_abrir)
+        self._timer_atualizacao.start()
 
     def _oferecer_aplicar_atualizacao(self):
         """Depois de preparar o pacote, oferece aplicar — era o passo que faltava.
