@@ -12,6 +12,15 @@ except ImportError:
 
 from core.undo import push_undo
 
+
+def _ponto_de_retorno(alvo) -> None:
+    """Copia o estado atual para o desfazer global antes de mexer."""
+    try:
+        from core import desfazer_global
+        desfazer_global.guardar(alvo)
+    except Exception:
+        pass
+
 _OS = platform.system()  # "Windows" | "Darwin" | "Linux"
 
 # Undo keeps a file's previous contents in memory so `write` can be reversed.
@@ -255,6 +264,7 @@ def create_file(path: str, name: str = "", content: str = "") -> str:
             except Exception:
                 previous = None
         target.write_text(content, encoding="utf-8")
+        _ponto_de_retorno(target)
         push_undo(f"created {target.name}",
                   _undo_write(target, previous) if existed else _undo_create(target))
         return f"File created: {target.name}"
@@ -278,6 +288,7 @@ def create_folder(path: str, name: str = "") -> str:
         # that was already there is not a change, and undoing it would delete a
         # directory the user has had for years.
         if not already:
+            _ponto_de_retorno(target)
             push_undo(f"created folder {target.name}", _undo_create(target))
         return (f"Pasta já existia (verificada): {target.resolve()}" if already
                 else f"Pasta criada e verificada: {target.resolve()}")

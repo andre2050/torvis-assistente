@@ -195,6 +195,12 @@ def escrever_com_seguranca(caminho: Path | str, texto: str, *,
             shutil.copy2(caminho, copia)
 
         temporario = caminho.with_suffix(caminho.suffix + ".novo")
+        # ponto de retorno: o desfazer global relê isto depois de um reinício
+        try:
+            from core import desfazer_global
+            desfazer_global.guardar(caminho)
+        except Exception:
+            pass
         temporario.write_text(texto, encoding="utf-8")
 
         if validar:
